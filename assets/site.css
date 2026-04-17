@@ -118,6 +118,12 @@ p, li {
   padding: 32px;
 }
 
+.hero-home .hero-copy {
+  background:
+    linear-gradient(135deg, rgba(255, 251, 245, 0.94), rgba(255, 246, 236, 0.86)),
+    radial-gradient(circle at top right, rgba(180, 79, 42, 0.12), transparent 32%);
+}
+
 .hero h1,
 .essay-header h1,
 .section-heading h1,
@@ -141,6 +147,35 @@ p, li {
   color: var(--muted);
   font-size: 0.98rem;
   max-width: 54ch;
+}
+
+.hero-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 26px;
+}
+
+.hero-metrics div {
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: rgba(255, 251, 245, 0.72);
+}
+
+.hero-metrics span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.hero-metrics strong {
+  display: block;
+  font-size: 0.95rem;
+  line-height: 1.35;
 }
 
 .eyebrow,
@@ -187,6 +222,11 @@ p, li {
 .note-panel,
 .aside-box {
   padding: 28px;
+}
+
+.profile-card-home {
+  background:
+    linear-gradient(180deg, rgba(255, 251, 245, 0.92), rgba(247, 238, 225, 0.86));
 }
 
 .profile-card h2 {
@@ -419,6 +459,10 @@ p, li {
   .split-grid,
   .post-card,
   .article-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-metrics {
     grid-template-columns: 1fr;
   }
 

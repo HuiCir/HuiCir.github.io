@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Migraine 的研究与工程博客，聚焦 long-running agents、LLM systems 与可交付的实验笔记。">
+  <meta name="description" content="Migraine 的研究与工程博客，聚焦 long-running agents、LLM systems 与研究型工程实践。">
   <meta name="theme-color" content="#f6f3ea">
   <meta property="og:title" content="Migraine">
-  <meta property="og:description" content="内容为主，个人信息为辅。记录 multi-agent systems、tooling 和研究型工程实践。">
+  <meta property="og:description" content="一个以文章为中心的个人博客，写 agent systems、tooling、workflow orchestration 和研究工程化。">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://huicir.github.io/">
   <title>Migraine</title>
@@ -27,24 +27,38 @@
     </header>
 
     <main>
-      <section class="hero">
+      <section class="hero hero-home">
         <div class="hero-copy">
           <p class="eyebrow">Research notes, system design, and shipping logs.</p>
-          <h1>写项目，也写项目背后的系统。</h1>
+          <h1>一个以文章为中心的博客主页。</h1>
           <p class="hero-summary">
-            这里主要记录 long-running agents、workflow orchestration、RAG 与研究工程化，
-            先放文章和项目，再慢慢补充个人信息。
+            这里不再保留旧项目模板、旧归档和历史站点样式。现在的站点只做一件事：
+            把我在 long-running agents、workflow orchestration、RAG 和研究工程化上的判断写成清楚的文章。
           </p>
+          <div class="hero-metrics" aria-label="Site summary">
+            <div>
+              <span>Now publishing</span>
+              <strong>Systems essays</strong>
+            </div>
+            <div>
+              <span>Current series</span>
+              <strong>Token Never Sleeps</strong>
+            </div>
+            <div>
+              <span>Format</span>
+              <strong>Notes, breakdowns, postmortems</strong>
+            </div>
+          </div>
           <div class="hero-actions">
-            <a class="button button-primary" href="/posts/token-never-sleeps/">阅读首篇文章</a>
-            <a class="button button-secondary" href="/writing/">查看全部文章</a>
+            <a class="button button-primary" href="/posts/token-never-sleeps/">阅读最新文章</a>
+            <a class="button button-secondary" href="/writing/">进入 Writing</a>
           </div>
         </div>
-        <aside class="profile-card">
-          <p class="profile-label">About</p>
+        <aside class="profile-card profile-card-home">
+          <p class="profile-label">Editorial note</p>
           <h2>Migraine</h2>
           <p>
-            独立研究者 / 工程实践者。偏好把想法写成代码，把代码沉淀成系统，再把系统写成清楚的文章。
+            独立研究者 / 工程实践者。偏好把系统写明白，而不是把首页做成项目链接仓库。
           </p>
           <dl class="meta-grid">
             <div>
@@ -52,8 +66,8 @@
               <dd>Agents, infra, evaluation</dd>
             </div>
             <div>
-              <dt>Now</dt>
-              <dd>Token Never Sleeps</dd>
+              <dt>Status</dt>
+              <dd>New blog homepage</dd>
             </div>
             <div>
               <dt>Elsewhere</dt>
@@ -66,7 +80,7 @@
       <section class="section-block">
         <div class="section-heading">
           <p class="eyebrow">Featured writing</p>
-          <h2>最近文章</h2>
+          <h2>最新文章</h2>
         </div>
 
         <article class="post-card post-card-featured">
@@ -89,32 +103,30 @@
       <section class="section-block split-grid">
         <div>
           <div class="section-heading">
-            <p class="eyebrow">Selected projects</p>
-            <h2>项目，而不是链接堆砌</h2>
+            <p class="eyebrow">Publishing direction</p>
+            <h2>现在写什么</h2>
           </div>
           <div class="mini-list">
-            <a class="mini-item" href="https://github.com/HuiCir/token-never-sleeps" target="_blank" rel="noopener">
-              <span>Token Never Sleeps</span>
-              <span>Long-running Claude plugin</span>
-            </a>
-            <a class="mini-item" href="https://github.com/HuiCir/opencrowd" target="_blank" rel="noopener">
-              <span>OpenCrowd</span>
-              <span>Multi-agent orchestration runtime</span>
-            </a>
-            <a class="mini-item" href="https://github.com/HuiCir/codex-crowd" target="_blank" rel="noopener">
-              <span>Codex Crowd</span>
-              <span>Codex-oriented public runtime</span>
-            </a>
+            <div class="mini-item">
+              <span>Long-running agent runtime</span>
+              <span>如何让任务跨会话推进、恢复和验证</span>
+            </div>
+            <div class="mini-item">
+              <span>Workflow orchestration</span>
+              <span>planner、executor、verifier 应该怎样分工</span>
+            </div>
+            <div class="mini-item">
+              <span>Research engineering</span>
+              <span>把实验变成可交付系统，而不是一次性 demo</span>
+            </div>
           </div>
         </div>
 
         <div class="note-panel">
-          <p class="eyebrow">Open work</p>
+          <p class="eyebrow">Why this homepage</p>
           <p>
-            最近把 <a href="https://github.com/HuiCir/token-never-sleeps" target="_blank" rel="noopener">Token Never Sleeps</a>、
-            <a href="https://github.com/HuiCir/opencrowd" target="_blank" rel="noopener">OpenCrowd</a> 和
-            <a href="https://github.com/HuiCir/codex-crowd" target="_blank" rel="noopener">Codex Crowd</a>
-            逐步整理成公开项目。比起只放结果，我更想把这些项目的设计判断、失败经验和工程细节写下来。
+            旧站点的问题不是“样式过时”，而是信息结构混乱：历史模板、旧归档、项目残留和新内容并存。
+            现在主页只承担博客首页的职责，项目细节进入文章，文章再指向对应仓库与设计文档。
           </p>
         </div>
       </section>
