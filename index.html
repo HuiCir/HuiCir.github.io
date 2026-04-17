@@ -1,249 +1,126 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN">
-
-
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#202020"/>
-  <meta http-equiv="x-ua-compatible" content="ie=edge">
-  <script src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" async></script>
-  
-  
-    <meta name="keywords" content="" />
-  
-
-  
-    <meta name="description" content="Hexo," />
-  
-  
-  <link rel="icon" type="image/x-icon" href="/logo.png">
-  <title> [ Hexo ]</title>
-  
-    <!-- stylesheets list from config.yml -->
-    
-      <link rel="stylesheet" href="//cdn.bootcss.com/pure/1.0.0/pure-min.css">
-    
-      <link rel="stylesheet" href="/css/xoxo.css">
-    
-  
-<meta name="generator" content="Hexo 5.1.1"></head>
-
-
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Hui Cir 的研究与工程博客，聚焦 long-running agents、LLM systems 与可交付的实验笔记。">
+  <meta name="theme-color" content="#f6f3ea">
+  <meta property="og:title" content="Hui Cir">
+  <meta property="og:description" content="内容为主，个人信息为辅。记录 multi-agent systems、tooling 和研究型工程实践。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://huicir.github.io/">
+  <title>Hui Cir</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/site.css">
+</head>
 <body>
-  <div class="nav-container">
-    <nav class="home-menu pure-menu pure-menu-horizontal">
-  <a class="pure-menu-heading" href="/">
-    <img class="avatar" src="http://yoursite.com/images/logo.png">
-    <span class="title">Hexo</span>
-  </a>
+  <div class="page-shell">
+    <header class="site-header">
+      <a class="site-mark" href="/">Hui Cir</a>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="/writing/">Writing</a>
+        <a href="https://github.com/HuiCir" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/HuiCir/token-never-sleeps" target="_blank" rel="noopener">Projects</a>
+      </nav>
+    </header>
 
-  <ul class="pure-menu-list clearfix">
-      
-          
-            <li class="pure-menu-item actived"><a href="/" class="pure-menu-link">首页</a></li>
-          
-      
-          
-            <li class="pure-menu-item"><a href="/archives" class="pure-menu-link">归档</a></li>
-          
-      
-          
-            <li class="pure-menu-item"><a href="/tags" class="pure-menu-link">标签</a></li>
-          
-      
-          
-            <li class="pure-menu-item"><a href="/search" class="pure-menu-link">搜索</a></li>
-          
-      
-          
-            <li class="pure-menu-item"><a target="_blank" rel="noopener" href="https://0xff000000.com" class="pure-menu-link">关于</a></li>
-          
-      
-          
-            <li class="pure-menu-item"><a href="/atom.xml" class="pure-menu-link">订阅</a></li>
-          
-      
-  </ul>
-   
-</nav>
-  </div>
+    <main>
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Research notes, system design, and shipping logs.</p>
+          <h1>一个以内容为主的个人博客，记录我如何把 AI 系统做成可持续运行的工具。</h1>
+          <p class="hero-summary">
+            我关注 long-running agents、workflow orchestration、RAG 与研究工程化。这里不会先讲“我是谁”，
+            而是先给出可读、可复用、可验证的项目文章。
+          </p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="/posts/token-never-sleeps/">阅读首篇文章</a>
+            <a class="button button-secondary" href="/writing/">查看全部文章</a>
+          </div>
+        </div>
+        <aside class="profile-card">
+          <p class="profile-label">About</p>
+          <h2>Hui Cir</h2>
+          <p>
+            独立研究者 / 工程实践者。偏好把想法写成代码，把代码沉淀成系统，再把系统写成清楚的文章。
+          </p>
+          <dl class="meta-grid">
+            <div>
+              <dt>Focus</dt>
+              <dd>Agents, infra, evaluation</dd>
+            </div>
+            <div>
+              <dt>Now</dt>
+              <dd>Token Never Sleeps</dd>
+            </div>
+            <div>
+              <dt>Elsewhere</dt>
+              <dd><a href="https://github.com/HuiCir" target="_blank" rel="noopener">@HuiCir</a></dd>
+            </div>
+          </dl>
+        </aside>
+      </section>
 
-  <div class="container" id="content-outer">
-    <div class="inner" id="content-inner">
-      
-
-  <div class="recent-posts">
-    
-
-      <article class="recent-post-item">
-        <a class="title" href="/2020/08/24/hello-world/"><h2>Hello World</h2></a>
-        <div class="post-meta">
-          
-          <time class="time" datetime="2020-08-24T15:16:42.228Z">
-            2020-08-24
-          </time>
-          
-          <span class="slash">/</span>
-          
-          
-          
-
+      <section class="section-block">
+        <div class="section-heading">
+          <p class="eyebrow">Featured writing</p>
+          <h2>最近文章</h2>
         </div>
 
-        
-        <a class="more" href="/2020/08/24/hello-world/"> 阅读全文〉</a>
-      </article>
-    
+        <article class="post-card post-card-featured">
+          <div class="post-card-main">
+            <p class="post-kicker">Essay 001</p>
+            <h3><a href="/posts/token-never-sleeps/">Token Never Sleeps：把长时任务从一次对话，变成可接力的工作流</a></h3>
+            <p class="post-excerpt">
+              这篇文章解释我为什么做 TNS，它试图解决什么问题，以及一个长时间运行的 agent 系统为什么必须引入
+              runner、fresh-context handoff、verifier loop 和 quota-awareness。
+            </p>
+          </div>
+          <div class="post-card-side">
+            <p>2026-04-17</p>
+            <p>12 min read</p>
+            <p><a href="https://github.com/HuiCir/token-never-sleeps" target="_blank" rel="noopener">Repo</a></p>
+          </div>
+        </article>
+      </section>
+
+      <section class="section-block split-grid">
+        <div>
+          <div class="section-heading">
+            <p class="eyebrow">Selected projects</p>
+            <h2>项目，而不是链接堆砌</h2>
+          </div>
+          <div class="mini-list">
+            <a class="mini-item" href="https://github.com/HuiCir/token-never-sleeps" target="_blank" rel="noopener">
+              <span>Token Never Sleeps</span>
+              <span>Long-running Claude plugin</span>
+            </a>
+            <a class="mini-item" href="https://github.com/HuiCir/opencrowd" target="_blank" rel="noopener">
+              <span>OpenCrowd</span>
+              <span>Multi-agent orchestration runtime</span>
+            </a>
+            <a class="mini-item" href="https://github.com/HuiCir/codex-crowd" target="_blank" rel="noopener">
+              <span>Codex Crowd</span>
+              <span>Codex-oriented public runtime</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="note-panel">
+          <p class="eyebrow">Publishing note</p>
+          <p>
+            这个站点选择纯静态 HTML/CSS。原因很简单：个人主页不应该依赖复杂构建链才能更新，
+            文章和页面应当能直接在 `gh-pages` 分支发布。
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>Hui Cir. Writing in public about agent systems, tooling, and research engineering.</p>
+    </footer>
   </div>
-
-
-
-    </div>
-
-    
-
-  </div>
-  <footer class="footer text-center">
-    <div id="bottom-inner">
-        <a class="bottom-item" target="_blank" rel="noopener" href="https://blog.0xff000000.com">首页</a> |
-        <a class="bottom-item" href="https://0xff000000.com" target="_blank">主站</a> |
-        <a class="bottom-item" href="https://github.com/KevinOfNeu" target="_blank">GitHub</a> |
-        <a class="bottom-item" href="https://hexo.io" target="_blank">Powered by hexo</a> |
-        <a class="bottom-item" href="https://github.com/KevinOfNeu/hexo-theme-xoxo" target="_blank">Theme xoxo</a>
-    </div>
-</footer>
-  
-
-<script>
-  (function(window, document, undefined) {
-
-    var timer = null;
-
-    function returnTop() {
-      cancelAnimationFrame(timer);
-      timer = requestAnimationFrame(function fn() {
-        var oTop = document.body.scrollTop || document.documentElement.scrollTop;
-        if (oTop > 0) {
-          document.body.scrollTop = document.documentElement.scrollTop = oTop - 50;
-          timer = requestAnimationFrame(fn);
-        } else {
-          cancelAnimationFrame(timer);
-        }
-      });
-    }
-
-    var hearts = [];
-    window.requestAnimationFrame = (function() {
-      return window.requestAnimationFrame ||
-        window.webkitRequestAnimationFrame ||
-        window.mozRequestAnimationFrame ||
-        window.oRequestAnimationFrame ||
-        window.msRequestAnimationFrame ||
-        function(callback) {
-          setTimeout(callback, 1000 / 60);
-        }
-    })();
-    init();
-
-    function init() {
-      css(".heart{z-index:9999;width: 10px;height: 10px;position: fixed;background: #f00;transform: rotate(45deg);-webkit-transform: rotate(45deg);-moz-transform: rotate(45deg);}.heart:after,.heart:before{content: '';width: inherit;height: inherit;background: inherit;border-radius: 50%;-webkit-border-radius: 50%;-moz-border-radius: 50%;position: absolute;}.heart:after{top: -5px;}.heart:before{left: -5px;}");
-      attachEvent();
-      gameloop();
-      addMenuEvent();
-    }
-
-    function gameloop() {
-      for (var i = 0; i < hearts.length; i++) {
-        if (hearts[i].alpha <= 0) {
-          document.body.removeChild(hearts[i].el);
-          hearts.splice(i, 1);
-          continue;
-        }
-        hearts[i].y--;
-        hearts[i].scale += 0.004;
-        hearts[i].alpha -= 0.013;
-        hearts[i].el.style.cssText = "left:" + hearts[i].x + "px;top:" + hearts[i].y + "px;opacity:" + hearts[i].alpha + ";transform:scale(" + hearts[i].scale + "," + hearts[i].scale + ") rotate(45deg);background:" + hearts[i].color;
-      }
-      requestAnimationFrame(gameloop);
-    }
-
-    /**
-     * 给logo设置点击事件
-     * 
-     * - 回到顶部
-     * - 出现爱心
-     */
-    function attachEvent() {
-      var old = typeof window.onclick === "function" && window.onclick;
-      var logo = document.getElementById("logo");
-      if (logo) {
-        logo.onclick = function(event) {
-          returnTop();
-          old && old();
-          createHeart(event);
-        }
-      }
-      
-    }
-
-    function createHeart(event) {
-      var d = document.createElement("div");
-      d.className = "heart";
-      hearts.push({
-        el: d,
-        x: event.clientX - 5,
-        y: event.clientY - 5,
-        scale: 1,
-        alpha: 1,
-        color: randomColor()
-      });
-      document.body.appendChild(d);
-    }
-
-    function css(css) {
-      var style = document.createElement("style");
-      style.type = "text/css";
-      try {
-        style.appendChild(document.createTextNode(css));
-      } catch (ex) {
-        style.styleSheet.cssText = css;
-      }
-      document.getElementsByTagName('head')[0].appendChild(style);
-    }
-
-    function randomColor() {
-      // return "rgb(" + (~~(Math.random() * 255)) + "," + (~~(Math.random() * 255)) + "," + (~~(Math.random() * 255)) + ")";
-      return "#F44336";
-    }
-
-    function addMenuEvent() {
-      var menu = document.getElementById('menu-main-post');
-      if (menu) {
-        var toc = document.getElementById('toc');
-        if (toc) {
-          menu.onclick = function() {
-            if (toc) {
-              if (toc.style.display == 'block') {
-                toc.style.display = 'none';
-              } else {
-                toc.style.display = 'block';
-              }
-            }
-          };
-        } else {
-          menu.style.display = 'none';
-        }
-      }
-    }
-
-  })(window, document);
-</script>
-
-  
-
-
-
 </body>
 </html>
