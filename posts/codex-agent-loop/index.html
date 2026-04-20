@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="从 OpenAI 官方文章、openai/codex 源码和 awesome-harness 复现实验出发，解释 Codex agent loop 如何把模型动作变成可治理的工程动作。">
+  <meta name="description" content="解读 Codex agent loop 和 harness 的设计哲学：模型提出意图，运行时把意图变成可治理、可恢复、可审计的工程动作。">
   <meta name="theme-color" content="#f6f3ea">
   <meta property="og:title" content="Codex 的 agent loop">
-  <meta property="og:description" content="从源码到 awesome-harness：模型提出动作，harness 负责调度、审批、执行和结果回灌。">
+  <meta property="og:description" content="薄 loop，厚 harness：Codex 如何把模型输出变成可治理的工程动作。">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://huicir.github.io/posts/codex-agent-loop/">
   <title>Codex 的 agent loop | Migraine</title>
@@ -29,325 +29,207 @@
       <article class="essay">
         <header class="essay-header" id="top">
           <p class="eyebrow">Essay 002 · Codex Architecture</p>
-          <h1>Codex 的 agent loop：从源码到一个可复现实验</h1>
+          <h1>Codex 的 agent loop：薄循环，厚 harness</h1>
           <p class="essay-dek">
-            这篇文章把三件事放在同一条线上看：OpenAI 对 Codex loop 和 harness 的公开解释，
-            <code>openai/codex</code> 里的运行时边界，以及 <code>awesome-harness</code> 里可运行的教学 demo。
-            结论不是“模型会不会写代码”，而是模型提出动作之后，谁来决定这一步能不能发生、怎样发生、结果如何进入下一轮。
+            Codex 最值得看的地方，不是“模型会不会调用 shell”，而是它如何把一次模型输出变成可治理的工程动作。
+            agent loop 本身很薄：模型提出下一步，工具返回观察，直到任务结束。真正承重的是 harness：
+            它管理上下文、权限、沙箱、工具协议、历史和恢复路径。
           </p>
           <div class="essay-meta">
             <span>2026-04-20</span>
-            <span>13 min read</span>
+            <span>11 min read</span>
             <a href="https://openai.com/index/unrolling-the-codex-agent-loop/" target="_blank" rel="noopener">OpenAI source</a>
           </div>
         </header>
 
         <figure class="hero-figure">
           <img src="/assets/openai-codex-agent-loop.svg" alt="OpenAI diagram showing the Codex agent loop between user, agent, model and tool execution.">
-          <figcaption>OpenAI 官方 agent loop 示意图。本文关心的是这条 loop 在本地 coding agent runtime 里如何落地。</figcaption>
+          <figcaption>OpenAI 官方 agent loop 示意图。图里最简单的是循环，真正复杂的是循环落到本地工程环境之后的运行时边界。</figcaption>
         </figure>
 
         <div class="essay-body">
           <p>
-            写 Codex 容易写虚：模型、工具、上下文、沙箱、审批都很重要，但如果没有一个具体任务，这些词会变成架构口号。
-            本文换一个写法：先交代材料来源，再从任务需求反推 runtime 必须承担的职责，最后用
-            <a href="https://github.com/HuiCir/awesome-harness" target="_blank" rel="noopener">awesome-harness</a>
-            把同一个任务分别跑进“裸 shell-agent”和“Codex-style harness-agent”。
+            很多 coding agent 的介绍会从模型能力开始：能不能读项目、能不能写补丁、能不能跑测试。这个角度没错，但它容易漏掉更关键的问题：
+            当模型决定“下一步要做什么”之后，谁来决定这一步是否可以真的发生？
+          </p>
+
+          <p>
+            Codex 的答案不是把所有责任继续压给模型，而是在模型和真实机器之间放一层 harness。模型负责生成意图；
+            harness 负责把意图翻译成有边界的动作，并把动作结果放回下一轮推理。这个分工，是 Codex agent loop 的核心设计哲学。
           </p>
 
           <div class="callout">
-            <p class="callout-title">核心判断</p>
+            <p class="callout-title">一句话</p>
             <p>
-              Codex 的关键不是让模型直接操作机器，而是把模型输出变成一串可检查、可拒绝、可重试、可记录的系统动作。
-              模型负责提出下一步，harness 负责把这一步纳入工程边界。
+              Codex 不是“让模型操作你的机器”，而是“让模型通过一个受控运行时请求改变你的机器”。
             </p>
           </div>
 
-          <h2 id="materials">先把引用关系说清楚</h2>
+          <h2 id="simple-loop">Loop 很简单，也因此容易被误读</h2>
           <p>
-            本文不把 <code>awesome-harness</code> 当成 Codex 的源码替代品。它的作用是教学复现：用更少的代码稳定展示
-            “模型提议动作”和“运行时治理动作”之间的边界。真正的设计背景来自四类材料：
+            OpenAI 的 agent loop 图可以概括成几步：用户提出任务，模型生成回复；如果模型需要更多信息或需要执行动作，
+            它发起工具调用；运行时执行工具，把结果追加回上下文；模型基于新信息继续推理；直到它不再调用工具，而是返回 assistant message。
           </p>
 
-          <ul>
-            <li>
-              <a href="https://openai.com/index/unrolling-the-codex-agent-loop/" target="_blank" rel="noopener">OpenAI 的 agent loop 文章</a>
-              说明了 Codex harness 如何组织用户、模型和工具之间的往返；同一篇文章也强调，一个 turn 里可以包含多次模型推理和工具调用。
-            </li>
-            <li>
-              <a href="https://openai.com/index/unlocking-the-codex-harness/" target="_blank" rel="noopener">App Server 文章</a>
-              补上了产品侧背景：VS Code extension、TUI 等不同入口需要驱动同一套 harness，而不是各自重写一遍 agent loop。
-            </li>
-            <li>
-              <a href="https://github.com/openai/codex" target="_blank" rel="noopener">openai/codex 源码</a>
-              提供了实现锚点，尤其是 <code>run_turn()</code>、流式 <code>ResponseEvent</code> 处理和
-              <code>ToolOrchestrator</code>。
-            </li>
-            <li>
-              <a href="https://developers.openai.com/api/docs/guides/function-calling" target="_blank" rel="noopener">Responses API function calling 文档</a>
-              解释了 <code>function_call</code> 与 <code>function_call_output</code> 的协议形状；
-              <a href="https://developers.openai.com/api/docs/guides/conversation-state" target="_blank" rel="noopener">conversation state 文档</a>
-              解释了 <code>previous_response_id</code> 如何把下一轮请求接到上一轮响应之后。
-            </li>
-          </ul>
+          <pre><code>user task
+  -> model inference
+  -> tool call
+  -> tool result
+  -> model inference
+  -> assistant message</code></pre>
 
           <p>
-            这几类材料承担的角色不同：官方文章解释设计意图，源码解释真实边界，API 文档解释协议，
-            <code>awesome-harness</code> 则把这些边界压缩成一个可以在本地跑通的小实验。
-          </p>
-
-          <h2 id="requirements">从需求反推 loop 应该做什么</h2>
-          <p>
-            demo 使用同一个任务 query：
-          </p>
-
-          <pre><code>Inspect the project, summarize README.md, count Python files,
-clean only temporary cache, and write REPORT.md.</code></pre>
-
-          <p>
-            这个任务故意很小，但它包含 coding agent 最常见的四类责任。第一，读环境：列目录、读
-            <code>README.md</code>、统计 Python 文件。第二，控制副作用：只能清理临时缓存，而不是把“cleanup”
-            理解成删除整个工作区。第三，失败后恢复：如果模型先提出危险删除，runtime 应该把拒绝结果送回模型，让它改用更精确的动作。
-            第四，留下产物：最终写入 <code>REPORT.md</code>，并能验证工作区没有被破坏。
+            这条 loop 看起来几乎朴素，朴素到很多 demo 会把它写成十几行代码：拼 prompt、调模型、看到 shell command 就执行、
+            把 stdout 塞回去，再调一次模型。但 Codex 不是这样理解 agent loop 的。对一个本地 coding agent 来说，
+            loop 不是一段控制流，而是一条责任链。
           </p>
 
           <p>
-            如果 runtime 只会执行模型吐出的字符串，它只能在命令运行之后知道结果。Codex-style harness 则要求动作在执行前先结构化：
-            这是哪个工具、参数是什么、是否需要审批、是否允许越过沙箱、结果怎样回灌到 history。这个差别决定了系统能不能在副作用发生前介入。
+            代码修改、依赖安装、测试执行、文件删除、网络访问，这些都不是“文本输出”。它们会改变用户的工作区。
+            所以问题不能停在“模型下一步想做什么”，还必须继续问：这一步在什么目录执行？能写哪些路径？需不需要审批？
+            失败后是否允许换一种权限重试？工具输出如何记录？下一轮模型看到的到底是哪一种状态？
           </p>
 
-          <pre><code>task requirements
-  -> model proposes next action
-  -> scheduler reviews policy
-  -> executor runs allowed tool
-  -> function_call_output returns evidence
-  -> model continues or ends with assistant message</code></pre>
-
-          <h2 id="codex-source">Codex 源码里的边界</h2>
+          <h2 id="turn">Turn 不是 prompt，而是一次工程事务</h2>
           <p>
-            在 <code>openai/codex</code> 里，<code>run_turn()</code> 不是简单拼 prompt。进入采样之前，它会处理上下文更新、
-            skills 和 plugins 注入、MCP 工具、连接器、telemetry、compaction 等 turn 级状态。模型响应回来后，流式事件会被拆成
-            message、reasoning、function call、local shell call 等结构化 item；工具调用不会直接变成副作用，而是进入工具 runtime。
+            Codex 官方文章里有一个很重要的细节：一次 conversation turn 可以包含多次模型推理和多次工具调用。
+            这意味着 turn 不等于一段 prompt。它更像一次工程事务：从用户输入开始，到模型给出最终 assistant message 结束；
+            中间发生的工具调用、审批、失败、恢复、历史写入，都属于这次 turn 的一部分。
           </p>
 
           <p>
-            工具执行的关键落点是 <code>ToolOrchestrator</code>。源码注释把顺序写得很清楚：approval、选择 sandbox、第一次尝试，
-            如果 sandbox 拒绝且策略允许，再请求升级并重试。这里的重点不是“多一层封装”，而是把工具执行变成统一的控制面：
-            审批来源、沙箱策略、网络策略、失败输出、重试原因和 telemetry 都在同一条路径上。
-          </p>
-
-          <pre><code>ToolOrchestrator.run(...)
-  1. compute approval requirement
-  2. ask user or automated reviewer when needed
-  3. select initial sandbox
-  4. run tool attempt
-  5. if sandbox denies and policy permits, request approval
-  6. retry with escalated sandbox strategy</code></pre>
-
-          <p>
-            这也解释了为什么官方 App Server 文章会强调“同一套 harness”要服务多个产品面。CLI、IDE extension、桌面 app 的 UI
-            可以不同，但它们都需要同样的流式事件、审批事件、工具结果、diff 和 session state。把 harness 抽出来，不是为了架构好看，
-            而是为了让不同入口共享同一套治理规则。
-          </p>
-
-          <h2 id="awesome-harness">awesome-harness 承担什么角色</h2>
-          <p>
-            <code>awesome-harness</code> 不是 Codex 的缩小版，也不声称复刻沙箱、App Server 或上下文管理。它只保留本文要讨论的最小闭环：
-            模型提出动作，policy 审查动作，tool registry 执行动作，history 收到结构化结果，模型继续下一步。
-          </p>
-
-          <pre><code>docs/
-  architecture.md
-src/awesome_harness/
-  demo.py          CLI entrypoint
-  harness.py       conventional agent and harness loop
-  models.py        scripted model and OpenAI Responses adapter
-  policy.py        scheduler / approval policy
-  tools.py         local tools and JSON schemas
-  workspace.py     demo workspace and verifier
-tests/
-  test_policy_and_tools.py</code></pre>
-
-          <p>
-            运行方式很直接：
-          </p>
-
-          <pre><code>git clone https://github.com/HuiCir/awesome-harness.git
-cd awesome-harness
-python3 -m venv .venv
-. .venv/bin/activate
-pip install -e .
-python3 -m awesome_harness.demo compare</code></pre>
-
-          <p>
-            <code>compare</code> 会创建两个临时工作区，各自包含 <code>README.md</code>、<code>src/main.py</code> 和
-            <code>tmp/cache.txt</code>。两个 agent 拿到同一个任务；差别只在 runtime 怎么理解和执行模型动作。
-          </p>
-
-          <h2 id="conventional">常规 shell-agent 为什么不够</h2>
-          <p>
-            常规版本在 <code>harness.py</code> 里叫 <code>ConventionalShellAgent</code>。它的 loop 很短：模型吐出 shell 字符串，
-            runtime 用 <code>subprocess.run(..., shell=True)</code> 执行，然后把 stdout 或 stderr 写回 history。
-          </p>
-
-          <pre><code>output = self.model.sample()
-if isinstance(output, AssistantMessage):
-    self.history.append({"role": "assistant", "content": output.text})
-    return output
-
-completed = subprocess.run(
-    output,
-    cwd=self.workspace,
-    shell=True,
-    check=False,
-    capture_output=True,
-    text=True,
-)
-self.history.append({"role": "tool", "content": observed})</code></pre>
-
-          <p>
-            这段代码适合说明最小 agent loop，但它没有治理入口。<code>cat README.md</code>、<code>find . -name '*.py'</code>
-            和 <code>rm -rf *</code> 在 runtime 眼里都是一段字符串。等 executor 发现 <code>tmp/cache.txt</code> 不存在时，
-            整个工作区已经被删掉了。
-          </p>
-
-          <h2 id="harness-code">Harness 版本把动作拆成三层</h2>
-          <p>
-            Codex-style 版本把同一件事拆成三层：model adapter、scheduler/policy、tool registry。
-            这三个名字比“更安全”更重要，因为它们对应代码里的职责边界。
-          </p>
-
-          <h3>1. Model adapter 只负责提出动作</h3>
-          <p>
-            离线模式使用 <code>ScriptedHarnessModel</code>，它按固定顺序返回 typed tool call：
-            <code>list_tree</code>、<code>read_file</code>、<code>count_files</code>、一次危险的
-            <code>delete_path({"path": ".", "recursive": true})</code>，再恢复为读取并删除
-            <code>tmp/cache.txt</code>，最后写 <code>REPORT.md</code>。
+            在 <code>openai/codex</code> 的公开源码里，<code>run_turn()</code> 进入模型采样之前已经做了很多运行时工作：
+            更新上下文、处理 skills 和 plugins、整理 MCP 工具、注入环境信息、维护 telemetry、必要时触发 compaction。
+            这些东西看起来都不属于“模型智能”，但它们决定了模型到底在什么现实条件下工作。
           </p>
 
           <p>
-            这个 scripted model 故意先犯错。它不是为了模拟“更聪明的模型”，而是为了验证 runtime 是否能在模型犯错时阻止副作用，并把拒绝结果作为下一步推理的输入。
+            这也是为什么“把 prompt 写好一点”不能替代 harness。prompt 可以提醒模型小心，turn context 则把小心变成可执行的边界：
+            当前目录是什么、沙箱策略是什么、审批策略是什么、可用工具是什么、用户和 developer instruction 的优先级是什么。
           </p>
 
-          <h3>2. Policy 在执行前审查工具调用</h3>
+          <h2 id="intent">工具调用是意图，不是副作用</h2>
           <p>
-            <code>HarnessPolicy.review()</code> 只处理本 demo 关心的规则：递归删除、删除工作区根目录、删除非 allowlist 路径都拒绝；
-            精确删除 <code>tmp/cache.txt</code> 才允许。shell 工具也只接受少量 argv 前缀。
-          </p>
-
-          <pre><code>if call.name == "delete_path":
-    target = str(call.arguments.get("path", ""))
-    recursive = bool(call.arguments.get("recursive", False))
-    if target in {"", ".", "*", "/"} or recursive:
-        return PolicyDecision(
-            "deny",
-            "broad or recursive delete requires explicit review",
-        )
-    if target != "tmp/cache.txt":
-        return PolicyDecision(
-            "deny",
-            f"delete target not in cleanup allowlist: {target}",
-        )</code></pre>
-
-          <p>
-            注意拒绝不是异常退出。拒绝本身会变成 <code>ToolResult(status="denied", ...)</code>，再作为
-            <code>function_call_output</code> 回到模型上下文。这样模型才有机会从“删除整个目录”恢复到“只删除缓存文件”。
-          </p>
-
-          <h3>3. Tool registry 执行被允许的现实动作</h3>
-          <p>
-            <code>LocalToolRegistry</code> 提供两类东西：一类是真实本地实现，例如读文件、列目录、计数、删除、写文件；
-            另一类是 JSON schema，用来告诉 Responses API 每个 function tool 的名字、描述和参数形状。执行前还会通过
-            <code>safe_path()</code> 确保路径没有逃出临时 workspace。
+            Codex loop 里最重要的边界，是把“工具调用”与“工具执行”分开。模型可以提出一个 tool call，
+            但这个 tool call 不应该天然拥有改变文件系统的权力。它先是一份意图描述：工具名、参数、调用 ID，以及它在当前 turn 里的位置。
           </p>
 
           <p>
-            到这里，模型已经不再直接“碰文件系统”。它只能提出一个带名字和参数的工具调用；policy 可以拒绝，tool registry 可以报错，
-            harness 负责把结果格式化后继续喂给模型。
-          </p>
-
-          <h2 id="responses-api">接入真实 Responses API 时变在哪里</h2>
-          <p>
-            真实 API 模式只替换 model adapter。<code>OpenAIResponsesModel</code> 会把本地工具 schema 传给
-            Responses API；模型如果返回 <code>function_call</code> item，harness 仍然在本地执行 policy review 和 tool execution，
-            然后把 <code>function_call_output</code> 作为下一次输入，并用 <code>previous_response_id</code> 接上上一轮响应。
-          </p>
-
-          <pre><code>response = self.client.responses.create(
-    model=self.model,
-    instructions=instructions,
-    input=input_items,
-    tools=tools,
-    previous_response_id=previous_response_id,
-    parallel_tool_calls=False,
-    store=True,
-)</code></pre>
-
-          <pre><code>input_items.append({
-    "type": "function_call_output",
-    "call_id": result.call_id,
-    "output": json.dumps(
-        {"status": result.status, "output": result.output},
-        ensure_ascii=False,
-    ),
-})</code></pre>
-
-          <p>
-            这里最容易误解的一点是：OpenAI API 不会替你执行本地工具。官方 local shell 文档也明确把执行责任放在应用自己的 runtime 里：
-            API 返回的是工具调用意图，真正是否执行、怎样沙箱、是否套 allowlist，都必须由本地 harness 决定。
-          </p>
-
-          <h2 id="result">运行结果说明了什么</h2>
-          <p>
-            下面是 <code>compare</code> 的关键输出。为了保持可读性，保留模型动作、scheduler 决策、executor 结果和最终验证：
-          </p>
-
-          <pre><code>=== Conventional shell-agent ===
-[MODEL] shell: rm -rf *
-[EXECUTOR] exit=0 output='&lt;exit 0; no output&gt;'
-[MODEL] shell: cat tmp/cache.txt
-[EXECUTOR] exit=1 output='cat: tmp/cache.txt: No such file or directory'
-[WORKSPACE TREE AFTER CONVENTIONAL]
-REPORT.md
-[VERIFY] conventional demonstrates failure mode: PASS
-
-=== Codex-style harness-agent ===
-[MODEL] tool_call: delete_path {'path': '.', 'recursive': True}
-[SCHEDULER] deny: broad or recursive delete requires explicit review
-[EXECUTOR] denied: 'broad or recursive delete requires explicit review'
-[MODEL] tool_call: read_file {'path': 'tmp/cache.txt'}
-[SCHEDULER] allow: tool call satisfies local policy
-[EXECUTOR] ok: 'transient cache: safe to remove after inspection'
-[MODEL] tool_call: delete_path {'path': 'tmp/cache.txt', 'recursive': False}
-[SCHEDULER] allow: tool call satisfies local policy
-[EXECUTOR] ok: 'deleted tmp/cache.txt'
-[MODEL] tool_call: write_file {'path': 'REPORT.md', ...}
-[EXECUTOR] ok: 'wrote REPORT.md'
-[WORKSPACE TREE AFTER HARNESS]
-README.md
-REPORT.md
-src/
-src/main.py
-tmp/
-[VERIFY] harness preserves source and removes only cache: PASS</code></pre>
-
-          <p>
-            常规版本不是没有完成任务：它也写出了报告。但它在写报告前删除了支撑报告的项目上下文。harness 版本先拒绝危险删除，
-            再允许精确清理，最后保留源码、报告和空的 <code>tmp/</code> 目录。这个结果把 Codex loop 的价值压得很具体：
-            运行时不是让模型更聪明，而是让模型动作在进入现实世界前先变成可治理对象。
-          </p>
-
-          <h2 id="takeaway">回到 Codex</h2>
-          <p>
-            如果只看 loop 图，Codex 像是“模型调用工具直到结束”。如果把源码和 demo 放在一起看，重点会更清楚：
-            agent loop 的难点不在循环语句，而在循环周围的控制面。turn context、tool schema、审批、沙箱、历史记录、结果回灌、
-            session state 和多端协议，都是为了回答同一个问题：模型下一步提出的动作，怎样才能安全地发生在真实工程环境里。
+            这个区别听起来细，但它决定了系统能否治理副作用。假设模型想删除文件。没有 harness 的设计里，
+            “删除文件”可能只是 shell 字符串里的几个字符；运行时只能执行后再看结果。Codex-style 的设计里，
+            删除动作会先进入调度和审查路径：它要删哪里？是否递归？是否越过工作区？是否需要用户批准？如果被拒绝，拒绝理由如何回到模型上下文？
           </p>
 
           <p>
-            这也是 <code>awesome-harness</code> 值得单独引用的原因。它不证明 Codex 的全部复杂度，却把“为什么需要厚 harness”
-            这件事变成了可以运行、可以观察、可以测试的最小案例。理解这个案例，再回头看 Codex 的 <code>run_turn()</code> 和
-            <code>ToolOrchestrator</code>，那些看起来厚重的层次就不再只是框架复杂度，而是 coding agent 必须承担的工程责任。
+            OpenAI Responses API 的 function calling 协议也体现了这个边界：模型返回 <code>function_call</code>，
+            应用执行自己的函数，然后把 <code>function_call_output</code> 交回模型。API 不替应用执行本地工具；
+            执行权仍然在 harness 手里。
+          </p>
+
+          <h2 id="tool-orchestrator">ToolOrchestrator 承载的是治理逻辑</h2>
+          <p>
+            在 Codex 源码里，工具执行的核心入口之一是 <code>ToolOrchestrator</code>。它不是简单的 executor。
+            它把工具运行放进统一顺序：先判断 approval requirement，再选择 sandbox，执行第一次 attempt；
+            如果 sandbox 拒绝，并且策略允许，再请求升级并重试。
+          </p>
+
+          <pre><code>approval
+  -> sandbox selection
+  -> first attempt
+  -> denial handling
+  -> optional approval for escalation
+  -> retry with adjusted sandbox</code></pre>
+
+          <p>
+            这套顺序背后的哲学很清楚：模型不直接拥有现实动作，工具也不绕过运行时策略。所有会改变环境的动作，
+            都必须穿过同一个控制面。审批、沙箱、网络策略、失败原因、telemetry 和重试路径不散落在各个工具里，
+            而是由 harness 统一组织。
+          </p>
+
+          <p>
+            这就是“厚 harness”的含义。厚，不是代码多；厚，是责任重。它把语言模型不擅长稳定承担的事情拿出来：
+            权限判断、状态管理、边界执行、错误恢复、审计记录，以及不同客户端之间的一致协议。
+          </p>
+
+          <h2 id="products">为什么同一套 harness 要服务多个入口</h2>
+          <p>
+            OpenAI 后续关于 App Server 的文章，把这个设计从产品侧解释得更明显：VS Code extension、TUI、桌面入口都需要驱动同一套 harness。
+            这不是为了复用几段工具代码，而是为了复用同一套 agent runtime。
+          </p>
+
+          <p>
+            如果每个客户端都各自实现 loop，就会很快分叉：一个入口的审批语义不同，另一个入口的工具输出格式不同，
+            第三个入口的 session 恢复方式不同。对普通聊天产品来说，这可能只是体验差异；对 coding agent 来说，
+            这会变成安全边界和状态一致性问题。
+          </p>
+
+          <p>
+            所以 App Server 的价值不是“给 UI 一个接口”这么简单。它把 harness 的事件流、审批、diff、工具结果和 session state
+            变成客户端可以消费的协议。UI 可以不同，但改变工作区的那套规则必须尽量一致。
+          </p>
+
+          <h2 id="cost">厚 harness 的代价</h2>
+          <p>
+            这套设计当然有代价。调试一个失败的 Codex 任务，不能只看模型最后说了什么。你还要看 turn context、
+            输入历史、工具调用、审批事件、沙箱策略、工具输出、compaction 和最终写入的状态。
+          </p>
+
+          <p>
+            但这正是 coding agent 和普通聊天机器人的分界。聊天机器人的错误通常停留在文本里；coding agent 的错误可能落到文件系统、
+            依赖环境、网络请求和 git history 里。把复杂度留在 harness，而不是把复杂度交给模型自觉，是更稳的工程选择。
+          </p>
+
+          <h2 id="teaching-repo">awesome-harness 只是一个教学切片</h2>
+          <p>
+            <a href="https://github.com/HuiCir/awesome-harness" target="_blank" rel="noopener">awesome-harness</a>
+            的意义不在于复刻 Codex。它只是把上面的边界切成一个很小的可运行例子：同一个任务，一边让模型吐 shell 字符串并直接执行；
+            另一边让模型吐 typed tool call，再由 policy 和 tool registry 决定是否执行。
+          </p>
+
+          <p>
+            任务里故意放了一个危险但常见的词：cleanup。常规 shell-agent 把它扩成 <code>rm -rf *</code>，
+            结果报告写出来了，项目上下文也被删掉了。harness-agent 则先拒绝递归删除工作区，再允许删除明确的
+            <code>tmp/cache.txt</code>。这个 demo 只说明一件事：结构化动作给了运行时介入的机会。
+          </p>
+
+          <pre><code>Conventional shell-agent:
+  model: rm -rf *
+  executor: runs it
+  result: workspace context is gone
+
+Codex-style harness-agent:
+  model: delete_path {"path": ".", "recursive": true}
+  scheduler: deny
+  model: delete_path {"path": "tmp/cache.txt", "recursive": false}
+  scheduler: allow
+  result: source stays, cache is removed</code></pre>
+
+          <p>
+            这个例子应该被放在它该在的位置：它是显微镜，不是主题本身。主题仍然是 Codex harness 的设计哲学：
+            把模型的不确定输出转成可审查的动作，把危险副作用挡在执行前，把真实结果送回下一轮推理。
+          </p>
+
+          <h2 id="boundary">还要保留一个边界</h2>
+          <p>
+            harness 也不是魔法安全层。官方 agent loop 文章提到，Codex 注入的 sandbox developer message 约束的是 Codex 提供的 shell tool；
+            MCP 等外部工具需要各自负责 guardrails。换句话说，harness 可以统一很多治理逻辑，但一旦接入外部能力，
+            每种能力仍然要明确自己的权限模型和失败语义。
+          </p>
+
+          <p>
+            这点很重要。好的 agent runtime 不是宣称“工具都安全”，而是让每个工具在进入现实世界之前都有明确的协议位置：
+            它是谁、要做什么、参数是什么、谁批准、怎么执行、失败如何返回、结果如何被记录。
+          </p>
+
+          <h2 id="takeaway">回到那条 loop</h2>
+          <p>
+            Codex agent loop 表面上很薄：模型、工具、观察、再模型。真正值得学习的是 loop 外面的 harness。
+            它承认模型强在生成和推理，但不把权限、状态和副作用治理交给模型自由发挥。它把模型输出降落成工程系统可以处理的对象。
+          </p>
+
+          <p>
+            这也是 Codex 和许多 agent demo 的根本差别。demo 往往证明“模型能调用工具”；Codex 更关心“模型调用工具之后，
+            这件事如何在真实工作区里被约束、恢复、解释和复用”。薄 loop 让模型持续前进，厚 harness 让前进这件事不至于失控。
           </p>
 
           <h2 id="references">参考资料</h2>
@@ -357,8 +239,8 @@ tmp/
             <li><a href="https://developers.openai.com/api/docs/guides/function-calling" target="_blank" rel="noopener">OpenAI API: Function calling</a></li>
             <li><a href="https://developers.openai.com/api/docs/guides/conversation-state" target="_blank" rel="noopener">OpenAI API: Conversation state</a></li>
             <li><a href="https://developers.openai.com/api/docs/guides/tools-local-shell" target="_blank" rel="noopener">OpenAI API: Local shell</a></li>
-            <li><a href="https://github.com/HuiCir/awesome-harness" target="_blank" rel="noopener">awesome-harness teaching repo</a></li>
             <li><a href="https://github.com/openai/codex" target="_blank" rel="noopener">openai/codex public repository</a></li>
+            <li><a href="https://github.com/HuiCir/awesome-harness" target="_blank" rel="noopener">awesome-harness teaching repo</a></li>
           </ul>
         </div>
       </article>
@@ -367,12 +249,13 @@ tmp/
         <div class="aside-box">
           <p class="aside-title">Article map</p>
           <a href="#top">Overview</a>
-          <a href="#materials">Materials</a>
-          <a href="#requirements">Task requirements</a>
-          <a href="#codex-source">Codex source</a>
-          <a href="#awesome-harness">awesome-harness</a>
-          <a href="#harness-code">Code walk-through</a>
-          <a href="#result">Result</a>
+          <a href="#simple-loop">The loop</a>
+          <a href="#turn">Turn</a>
+          <a href="#intent">Tool intent</a>
+          <a href="#tool-orchestrator">ToolOrchestrator</a>
+          <a href="#products">Shared harness</a>
+          <a href="#teaching-repo">Teaching repo</a>
+          <a href="#takeaway">Takeaway</a>
           <a href="#references">References</a>
           <a href="/writing/">More writing</a>
         </div>
