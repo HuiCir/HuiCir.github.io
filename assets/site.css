@@ -431,6 +431,15 @@ p, li {
   color: #f8efe5;
 }
 
+.essay-body p code,
+.essay-body li code {
+  color: var(--accent-deep);
+  background: rgba(180, 79, 42, 0.08);
+  border: 1px solid rgba(180, 79, 42, 0.12);
+  border-radius: 6px;
+  padding: 0.05rem 0.26rem;
+}
+
 .callout {
   padding: 18px 20px;
   background: rgba(180, 79, 42, 0.08);
