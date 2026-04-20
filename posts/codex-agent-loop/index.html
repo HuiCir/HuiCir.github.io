@@ -165,6 +165,43 @@
             这就是本文反复强调的设计边界：模型负责提出下一步，运行时负责让这一步以可控方式发生。
           </p>
 
+          <h2>常规 agent 和 harness agent 的完整对照</h2>
+          <p>
+            如果要更直观地看差异，可以运行 <a href="./harness_comparison_demo.py">harness_comparison_demo.py</a>。
+            它会为两个 agent 创建相同的临时项目，并给出同一个 task query：检查项目、总结 README、统计 Python 文件、
+            清理临时缓存、写入报告。
+          </p>
+
+          <p>
+            常规版本让模型直接吐出 shell 字符串，executor 立即执行。demo 里它把“清理缓存”误扩展成 `rm -rf *`，
+            结果临时项目的 README、源码和缓存目录都被删掉，后续只能写出一个证据不完整的报告。
+          </p>
+
+          <p>
+            harness 版本则让模型吐出 typed tool call。调度器先审查 `delete_path`，拒绝 broad recursive delete，
+            再允许模型读取缓存并只删除 `tmp/cache.txt`。最终报告能保留 README、源码统计和清理结果，工作区也仍然可审计。
+          </p>
+
+          <pre><code>$ python3 posts/codex-agent-loop/harness_comparison_demo.py
+
+=== Conventional shell-agent ===
+[MODEL] shell: rm -rf *
+[EXECUTOR] exit=0 output='&lt;exit 0; no output&gt;'
+[WORKSPACE TREE AFTER CONVENTIONAL]
+REPORT.md
+
+=== Codex-style harness-agent ===
+[MODEL] tool_call: delete_path {'path': '.', 'recursive': True}
+[SCHEDULER] deny: broad or recursive delete requires explicit review
+[MODEL] tool_call: delete_path {'path': 'tmp/cache.txt'}
+[SCHEDULER] allow: tool call satisfies local policy
+[WORKSPACE TREE AFTER HARNESS]
+README.md
+REPORT.md
+src/
+src/main.py
+tmp/</code></pre>
+
           <h2>对 agent 系统设计的启示</h2>
           <p>
             Codex 给出的答案不是“写一个更大的 prompt”，而是把 agent loop 周围的东西认真系统化：
