@@ -135,6 +135,36 @@
             MCP 等外部工具需要各自负责 guardrails。也就是说，harness 可以统一很多事情，但外部能力接入仍然需要单独审计。
           </p>
 
+          <h2>用一段最小代码验证这个设计</h2>
+          <p>
+            这篇文章目前和官方博客最大的差距，是缺少一个可以跑起来的端到端链路。下面这个极小 harness 不调用真实模型，
+            而是用一个 scripted model 模拟模型输出：第一步请求执行 `pwd`，第二步请求执行危险的 `rm -rf`，第三步返回 assistant message。
+            关键点不在模型，而在 harness：它记录 history、审查 shell command、只允许安全前缀，并把 tool output 追加回下一轮输入。
+          </p>
+
+          <pre><code>class MiniHarness:
+    def run_turn(self, user_text):
+        self.history.append({"role": "user", "content": user_text})
+
+        while True:
+            output = self.model.sample(self.history)
+            if isinstance(output, AssistantMessage):
+                self.history.append({"role": "assistant", "content": output.text})
+                return output
+
+            self.history.append({"type": "function_call", "arguments": output.arguments})
+            tool_result = self.execute_tool(output)
+            self.history.append({"type": "function_call_output", "output": tool_result})
+
+    def review_command(self, command):
+        return "allow" if tuple(command[:1]) in [("pwd",), ("ls",)] else "deny"</code></pre>
+
+          <p>
+            完整脚本放在 <a href="./mini_harness.py">mini_harness.py</a>。运行它可以看到两件事：
+            `pwd` 会被执行并进入 history；危险命令不会被模型的“意图”直接执行，而是被 harness policy 拒绝。
+            这就是本文反复强调的设计边界：模型负责提出下一步，运行时负责让这一步以可控方式发生。
+          </p>
+
           <h2>对 agent 系统设计的启示</h2>
           <p>
             Codex 给出的答案不是“写一个更大的 prompt”，而是把 agent loop 周围的东西认真系统化：
