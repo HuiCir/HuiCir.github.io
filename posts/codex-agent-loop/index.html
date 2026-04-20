@@ -31,8 +31,8 @@
           <p class="eyebrow">Essay 002 · Codex Architecture</p>
           <h1>Codex 的 agent loop：模型决定下一步，harness 决定它如何发生</h1>
           <p class="essay-dek">
-            这篇是 Codex 架构解析系列的样板稿。它不把 Codex 讲成“一个会开 shell 的模型”，
-            而是把它拆成一个更工程化的系统：模型提出动作，运行时管理上下文、审批、沙箱、工具结果和会话状态。
+            Codex 不只是“一个会开 shell 的模型”。更准确的读法是：模型提出下一步动作，harness 负责把动作变成可治理的现实操作：
+            维护上下文、调度工具、执行审批、写入结果，并把这些结果送回下一轮推理。
           </p>
           <div class="essay-meta">
             <span>2026-04-20</span>
@@ -139,22 +139,29 @@
           <p>
             只讲“模型提出动作，harness 负责治理”还不够。下面用一个完整 task query 把流程跑出来：
             检查一个小项目、总结 `README.md`、统计 Python 文件、只清理临时缓存、最后写入 `REPORT.md`。
-            这个任务故意包含一个容易出错的词：cleanup。普通 agent 很容易把“清理缓存”扩写成大范围删除。
+            这个任务故意包含一个容易出错的词：cleanup。它足够小，初学者可以完整跑完；也足够真实，能暴露 agent runtime 的边界问题。
           </p>
 
           <pre><code>Inspect the project, summarize README.md, count Python files,
 clean only temporary cache, and write REPORT.md.</code></pre>
 
           <p>
-            我写了一个可运行 demo：<a href="./harness_comparison_demo.py">harness_comparison_demo.py</a>。
-            它不调用真实模型，而是用 deterministic scripted model 固定输出，避免把问题混到模型随机性里。
-            这样我们只观察 runtime 设计差异：同一个 query，常规 shell-agent 和 Codex-style harness-agent 会产生什么不同后果。
+            复现实验放在 <a href="https://github.com/HuiCir/awesome-harness" target="_blank" rel="noopener">awesome-harness</a>。
+            repo 里有两套实现：离线 scripted model 用来稳定复现运行时差异，OpenAI Responses API adapter 用来接入真实模型。
+            先看离线版本更合适，因为它排除了模型随机性，只保留 runtime 设计差异。
           </p>
+
+          <pre><code>git clone https://github.com/HuiCir/awesome-harness.git
+cd awesome-harness
+python3 -m venv .venv
+. .venv/bin/activate
+pip install -e .
+python3 -m awesome_harness.demo compare</code></pre>
 
           <h2>常规设计：模型吐 shell，runtime 直接执行</h2>
           <p>
             常规 shell-agent 的结构很短：模型输出一条 shell command，executor 直接在工作目录执行，然后把 stdout/stderr 追加回 history。
-            这种设计适合 demo，但它把“行动边界”完全交给模型。只要模型把 cleanup 扩成 `rm -rf *`，runtime 就会照做。
+            这种设计适合解释最小 agent loop，但它把“行动边界”完全交给模型。只要模型把 cleanup 扩成 `rm -rf *`，runtime 就会照做。
           </p>
 
           <pre><code>class ConventionalShellAgent:
@@ -222,19 +229,34 @@ clean only temporary cache, and write REPORT.md.</code></pre>
         return "allow", "tool call satisfies local policy"</code></pre>
 
           <p>
-            这段代码就是本文里 Codex-style harness 的最小复现：模型仍然可能提出危险动作，
+            这段代码对应 repo 里的 `HarnessAgent` 和 `HarnessPolicy`。模型仍然可能提出危险动作，
             但危险动作必须先通过 scheduler。`delete_path({"path": ".", "recursive": true})` 会被拒绝；
-            `delete_path({"path": "tmp/cache.txt"})` 才会被允许。
+            `delete_path({"path": "tmp/cache.txt", "recursive": false})` 才会被允许。
           </p>
 
-          <h2>运行 demo：从 query 到验证结果</h2>
+          <h2>接入真实 OpenAI API 时，变化在哪里</h2>
           <p>
-            运行完整 demo 会创建两个临时工作区，因此不会影响真实文件。完整源码就在
-            <a href="./harness_comparison_demo.py">harness_comparison_demo.py</a>；下面的输出保留了关键步骤：
+            离线 scripted model 和真实模型的差异只在 model adapter。harness loop、policy 和工具实现保持不变。
+            repo 里的 `OpenAIResponsesModel` 使用 Responses API function calling：模型返回 `function_call` item，
+            runtime 执行本地工具，再把 `function_call_output` 通过 `previous_response_id` 送回模型。
+          </p>
+
+          <pre><code>export OPENAI_API_KEY=sk-...
+export OPENAI_MODEL=gpt-5.4
+python3 -m awesome_harness.demo openai --model "$OPENAI_MODEL"</code></pre>
+
+          <p>
+            这里要特别小心一个事实：OpenAI API 不会替你执行本地工具。API 只返回工具调用意图；
+            是否允许、怎样执行、结果如何回传，仍然是本地 harness 的职责。这一点和本文对 Codex loop 的理解是一致的。
+          </p>
+
+          <h2>运行实验：从 query 到验证结果</h2>
+          <p>
+            `compare` 会创建两个临时工作区，因此不会影响真实文件。下面的输出保留了关键步骤：
             query、model action、scheduler decision、executor output、最终工作区和 verifier 结果。
           </p>
 
-          <pre><code>$ python3 posts/codex-agent-loop/harness_comparison_demo.py
+          <pre><code>$ python3 -m awesome_harness.demo compare
 
 === Conventional shell-agent ===
 [QUERY] Inspect the project, summarize README.md, count Python files, clean only temporary cache, and write REPORT.md.
@@ -273,14 +295,15 @@ tmp/
           </p>
 
           <p>
-            这也是我选择这篇作为 Codex 架构解析样板的原因。后续文章会继续拆上下文管理、权限系统、App Server、session persistence 和 multi-agent；
-            但所有这些主题最终都会回到同一个判断：真正能长期工作的 agent，靠的不是一条聪明的 loop，而是一套能约束、恢复和解释这条 loop 的 runtime。
+            后续如果继续拆上下文管理、权限系统、App Server、session persistence 和 multi-agent，核心判断仍然不会变：
+            真正能长期工作的 agent，靠的不是一条聪明的 loop，而是一套能约束、恢复和解释这条 loop 的 runtime。
           </p>
 
           <h2>参考资料</h2>
           <ul>
             <li><a href="https://openai.com/index/unrolling-the-codex-agent-loop/" target="_blank" rel="noopener">OpenAI: Unrolling the Codex agent loop</a></li>
             <li><a href="https://openai.com/index/unlocking-the-codex-harness/" target="_blank" rel="noopener">OpenAI: Unlocking the Codex harness</a></li>
+            <li><a href="https://github.com/HuiCir/awesome-harness" target="_blank" rel="noopener">awesome-harness teaching repo</a></li>
             <li><a href="https://github.com/openai/codex" target="_blank" rel="noopener">openai/codex public repository</a></li>
           </ul>
         </div>
@@ -292,6 +315,7 @@ tmp/
           <a href="#top">Overview</a>
           <a href="https://openai.com/index/unrolling-the-codex-agent-loop/" target="_blank" rel="noopener">Official loop post</a>
           <a href="https://openai.com/index/unlocking-the-codex-harness/" target="_blank" rel="noopener">Official harness post</a>
+          <a href="https://github.com/HuiCir/awesome-harness" target="_blank" rel="noopener">Demo repo</a>
           <a href="https://github.com/openai/codex" target="_blank" rel="noopener">OpenAI Codex repo</a>
           <a href="/writing/">More writing</a>
         </div>
