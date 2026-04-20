@@ -135,72 +135,136 @@
             MCP 等外部工具需要各自负责 guardrails。也就是说，harness 可以统一很多事情，但外部能力接入仍然需要单独审计。
           </p>
 
-          <h2>用一段最小代码验证这个设计</h2>
+          <h2>把 loop 放进一个具体任务</h2>
           <p>
-            这篇文章目前和官方博客最大的差距，是缺少一个可以跑起来的端到端链路。下面这个极小 harness 不调用真实模型，
-            而是用一个 scripted model 模拟模型输出：第一步请求执行 `pwd`，第二步请求执行危险的 `rm -rf`，第三步返回 assistant message。
-            关键点不在模型，而在 harness：它记录 history、审查 shell command、只允许安全前缀，并把 tool output 追加回下一轮输入。
+            只讲“模型提出动作，harness 负责治理”还不够。下面用一个完整 task query 把流程跑出来：
+            检查一个小项目、总结 `README.md`、统计 Python 文件、只清理临时缓存、最后写入 `REPORT.md`。
+            这个任务故意包含一个容易出错的词：cleanup。普通 agent 很容易把“清理缓存”扩写成大范围删除。
           </p>
 
-          <pre><code>class MiniHarness:
-    def run_turn(self, user_text):
-        self.history.append({"role": "user", "content": user_text})
+          <pre><code>Inspect the project, summarize README.md, count Python files,
+clean only temporary cache, and write REPORT.md.</code></pre>
+
+          <p>
+            我写了一个可运行 demo：<a href="./harness_comparison_demo.py">harness_comparison_demo.py</a>。
+            它不调用真实模型，而是用 deterministic scripted model 固定输出，避免把问题混到模型随机性里。
+            这样我们只观察 runtime 设计差异：同一个 query，常规 shell-agent 和 Codex-style harness-agent 会产生什么不同后果。
+          </p>
+
+          <h2>常规设计：模型吐 shell，runtime 直接执行</h2>
+          <p>
+            常规 shell-agent 的结构很短：模型输出一条 shell command，executor 直接在工作目录执行，然后把 stdout/stderr 追加回 history。
+            这种设计适合 demo，但它把“行动边界”完全交给模型。只要模型把 cleanup 扩成 `rm -rf *`，runtime 就会照做。
+          </p>
+
+          <pre><code>class ConventionalShellAgent:
+    def run(self):
+        self.history.append({"role": "user", "content": TASK_QUERY})
 
         while True:
             output = self.model.sample(self.history)
             if isinstance(output, AssistantMessage):
                 self.history.append({"role": "assistant", "content": output.text})
-                return output
+                return
 
-            self.history.append({"type": "function_call", "arguments": output.arguments})
-            tool_result = self.execute_tool(output)
-            self.history.append({"type": "function_call_output", "output": tool_result})
-
-    def review_command(self, command):
-        return "allow" if tuple(command[:1]) in [("pwd",), ("ls",)] else "deny"</code></pre>
+            completed = subprocess.run(
+                output,
+                cwd=self.workspace,
+                shell=True,
+                capture_output=True,
+                text=True,
+            )
+            observed = (completed.stdout or completed.stderr).strip()
+            self.history.append({"role": "tool", "content": observed})</code></pre>
 
           <p>
-            完整脚本放在 <a href="./mini_harness.py">mini_harness.py</a>。运行它可以看到两件事：
-            `pwd` 会被执行并进入 history；危险命令不会被模型的“意图”直接执行，而是被 harness policy 拒绝。
-            这就是本文反复强调的设计边界：模型负责提出下一步，运行时负责让这一步以可控方式发生。
+            注意这里的问题不是 shell 本身，而是 runtime 没有把模型意图转成可审查的结构。`rm -rf *` 和 `cat README.md`
+            对 executor 来说都是一段字符串；它没有机会理解“这是 broad recursive delete，应该先停下来”。
           </p>
 
-          <h2>常规 agent 和 harness agent 的完整对照</h2>
+          <h2>Codex-style harness：模型吐 tool call，harness 决定能否执行</h2>
           <p>
-            如果要更直观地看差异，可以运行 <a href="./harness_comparison_demo.py">harness_comparison_demo.py</a>。
-            它会为两个 agent 创建相同的临时项目，并给出同一个 task query：检查项目、总结 README、统计 Python 文件、
-            清理临时缓存、写入报告。
+            harness-agent 的模型输出不再是任意 shell 字符串，而是 typed tool call。运行时先进入 scheduler，
+            再进入 executor，最后把结构化 `function_call_output` 追加回 history。这样一来，危险动作在执行前就有了被审查的位置。
           </p>
 
-          <p>
-            常规版本让模型直接吐出 shell 字符串，executor 立即执行。demo 里它把“清理缓存”误扩展成 `rm -rf *`，
-            结果临时项目的 README、源码和缓存目录都被删掉，后续只能写出一个证据不完整的报告。
-          </p>
+          <pre><code>class CodexStyleHarnessAgent:
+    def run(self):
+        self.history.append({"type": "message", "role": "user", "content": TASK_QUERY})
+
+        while True:
+            output = self.model.sample(self.history)
+            if isinstance(output, AssistantMessage):
+                self.history.append({"type": "message", "role": "assistant", "content": output.text})
+                return
+
+            decision, reason = self.schedule(output)
+            if decision == "deny":
+                result = ToolResult(output.call_id, "denied", reason)
+            else:
+                result = self.execute(output)
+
+            self.history.append({
+                "type": "function_call_output",
+                "call_id": result.call_id,
+                "status": result.status,
+                "output": result.output,
+            })
+
+    def schedule(self, call):
+        if call.name == "delete_path":
+            target = str(call.arguments.get("path", ""))
+            recursive = bool(call.arguments.get("recursive", False))
+            if target in {".", "", "*"} or recursive:
+                return "deny", "broad or recursive delete requires explicit review"
+            if target != "tmp/cache.txt":
+                return "deny", f"delete target not in cleanup allowlist: {target}"
+        return "allow", "tool call satisfies local policy"</code></pre>
 
           <p>
-            harness 版本则让模型吐出 typed tool call。调度器先审查 `delete_path`，拒绝 broad recursive delete，
-            再允许模型读取缓存并只删除 `tmp/cache.txt`。最终报告能保留 README、源码统计和清理结果，工作区也仍然可审计。
+            这段代码就是本文里 Codex-style harness 的最小复现：模型仍然可能提出危险动作，
+            但危险动作必须先通过 scheduler。`delete_path({"path": ".", "recursive": true})` 会被拒绝；
+            `delete_path({"path": "tmp/cache.txt"})` 才会被允许。
+          </p>
+
+          <h2>运行 demo：从 query 到验证结果</h2>
+          <p>
+            运行完整 demo 会创建两个临时工作区，因此不会影响真实文件。完整源码就在
+            <a href="./harness_comparison_demo.py">harness_comparison_demo.py</a>；下面的输出保留了关键步骤：
+            query、model action、scheduler decision、executor output、最终工作区和 verifier 结果。
           </p>
 
           <pre><code>$ python3 posts/codex-agent-loop/harness_comparison_demo.py
 
 === Conventional shell-agent ===
+[QUERY] Inspect the project, summarize README.md, count Python files, clean only temporary cache, and write REPORT.md.
 [MODEL] shell: rm -rf *
 [EXECUTOR] exit=0 output='&lt;exit 0; no output&gt;'
 [WORKSPACE TREE AFTER CONVENTIONAL]
 REPORT.md
+[VERIFY] conventional demonstrates failure mode: PASS
 
 === Codex-style harness-agent ===
+[QUERY] Inspect the project, summarize README.md, count Python files, clean only temporary cache, and write REPORT.md.
 [MODEL] tool_call: delete_path {'path': '.', 'recursive': True}
 [SCHEDULER] deny: broad or recursive delete requires explicit review
+[EXECUTOR] denied: 'broad or recursive delete requires explicit review'
 [MODEL] tool_call: delete_path {'path': 'tmp/cache.txt'}
 [SCHEDULER] allow: tool call satisfies local policy
+[EXECUTOR] ok: 'deleted tmp/cache.txt'
 [WORKSPACE TREE AFTER HARNESS]
 README.md
 REPORT.md
 src/
 src/main.py
-tmp/</code></pre>
+tmp/
+[VERIFY] harness preserves source and removes only cache: PASS</code></pre>
+
+          <p>
+            这个结果比口头解释更直接：常规版本确实完成了“写报告”，但代价是删除了项目上下文；
+            harness 版本先拒绝错误 cleanup，再允许精确 cleanup，最后保留了可审计的项目结构和报告。
+            这就是 Codex loop 里 tool orchestration 的价值：它不是让模型更聪明，而是让模型的动作在进入现实世界前先变成可治理对象。
+          </p>
 
           <h2>对 agent 系统设计的启示</h2>
           <p>

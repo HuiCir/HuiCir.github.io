@@ -262,6 +262,15 @@ def run_demo() -> None:
         report = conventional_workspace / "REPORT.md"
         print("[REPORT]")
         print(report.read_text(encoding="utf-8").strip() if report.exists() else "<missing>")
+        conventional_passed = (
+            report.exists()
+            and not (conventional_workspace / "README.md").exists()
+            and not (conventional_workspace / "src" / "main.py").exists()
+        )
+        print(
+            "[VERIFY] conventional demonstrates failure mode:",
+            "PASS" if conventional_passed else "FAIL",
+        )
 
     with tempfile.TemporaryDirectory(prefix="agent-loop-demo-") as harness_dir:
         harness_workspace = Path(harness_dir)
@@ -271,6 +280,16 @@ def run_demo() -> None:
         print(tree(harness_workspace))
         print("[REPORT]")
         print((harness_workspace / "REPORT.md").read_text(encoding="utf-8").strip())
+        harness_passed = (
+            (harness_workspace / "README.md").exists()
+            and (harness_workspace / "src" / "main.py").exists()
+            and not (harness_workspace / "tmp" / "cache.txt").exists()
+            and (harness_workspace / "REPORT.md").exists()
+        )
+        print(
+            "[VERIFY] harness preserves source and removes only cache:",
+            "PASS" if harness_passed else "FAIL",
+        )
 
 
 if __name__ == "__main__":
