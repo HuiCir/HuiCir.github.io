@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="从 openai-codex 的公开源码和 OpenAI 官方博客出发，拆解 Codex agent loop 为什么是薄 loop、厚 harness。">
+  <meta name="theme-color" content="#f6f3ea">
+  <meta property="og:title" content="Codex 的 agent loop">
+  <meta property="og:description" content="模型决定下一步，harness 决定这一步如何安全地发生。">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://huicir.github.io/posts/codex-agent-loop/">
+  <title>Codex 的 agent loop | Migraine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+  <div class="page-shell page-shell-article">
+    <header class="site-header">
+      <a class="site-mark" href="/">Migraine</a>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="/writing/">Writing</a>
+        <a href="https://github.com/openai/codex" target="_blank" rel="noopener">OpenAI Codex</a>
+      </nav>
+    </header>
+
+    <main class="article-layout">
+      <article class="essay">
+        <header class="essay-header" id="top">
+          <p class="eyebrow">Essay 002 · Codex Architecture</p>
+          <h1>Codex 的 agent loop：模型决定下一步，harness 决定它如何发生</h1>
+          <p class="essay-dek">
+            这篇是 Codex 架构解析系列的样板稿。它不把 Codex 讲成“一个会开 shell 的模型”，
+            而是把它拆成一个更工程化的系统：模型提出动作，运行时管理上下文、审批、沙箱、工具结果和会话状态。
+          </p>
+          <div class="essay-meta">
+            <span>2026-04-20</span>
+            <span>10 min read</span>
+            <a href="https://openai.com/index/unrolling-the-codex-agent-loop/" target="_blank" rel="noopener">OpenAI source</a>
+          </div>
+        </header>
+
+        <figure class="hero-figure">
+          <img src="/assets/openai-codex-agent-loop.svg" alt="OpenAI diagram showing the Codex agent loop between user, agent, model and tool execution.">
+          <figcaption>OpenAI 官方 agent loop 示意图。本文关注的是这条 loop 在开源 Codex runtime 里如何落地。</figcaption>
+        </figure>
+
+        <div class="essay-body">
+          <p>
+            理解 Codex，最容易误入歧途的地方，是先盯着模型能力看。模型当然重要，但 Codex 真正值得拆的不是“模型能不能写代码”，
+            而是它如何把一次模型输出变成一套可恢复、可审计、可约束的工程动作。
+          </p>
+
+          <p>
+            OpenAI 官方博客把 Codex harness 描述成支撑 Codex 体验的运行时，agent loop 则负责组织用户、模型和工具之间的往返。
+            如果对照 `openai-codex` 的公开源码看，结论更清楚：Codex 的智能主要在模型里，可靠性主要在 harness 里。
+          </p>
+
+          <div class="callout">
+            <p class="callout-title">一句话版本</p>
+            <p>
+              Codex 不是让模型直接操作你的机器。模型给出下一步，运行时决定这一步是否允许、怎样执行、用什么边界执行，以及结果如何回到下一轮推理里。
+            </p>
+          </div>
+
+          <h2>一个 turn，不是一段 prompt</h2>
+          <p>
+            很多 agent demo 会把一次交互简化成“拼 prompt，然后调用模型”。Codex 的最小执行单元不是 prompt string，而是一个 turn。
+            turn 里有模型、reasoning 配置、当前工作目录、日期和时区、developer instructions、approval policy、sandbox policy、
+            tools config、动态工具、telemetry，以及本轮需要注入的上下文。
+          </p>
+
+          <p>
+            这解释了为什么 Codex 的主循环看起来不复杂，但周围系统很厚。它要在采样前更新上下文、记录历史、解析显式提到的 skills 和 plugins、
+            运行 hooks，把用户输入和注入项落进 session history，然后才进入流式响应处理。
+          </p>
+
+          <pre><code>turn context
+  -> model stream
+  -> message or tool call
+  -> tool runtime
+  -> tool result back into history
+  -> next model step</code></pre>
+
+          <h2>模型产出意图，运行时处理现实</h2>
+          <p>
+            在 Codex 的 loop 里，模型通过流式事件产生 message、reasoning、function call 或 tool call。
+            这些事件不会直接变成副作用。session 会先把流式片段落成结构化 item，更新 token usage 和 last agent message；
+            当模型要求执行工具时，动作再进入 tool runtime。
+          </p>
+
+          <p>
+            这个边界很重要。模型擅长选择下一步，但它不应该独自决定“是否可以运行这个命令”“是否需要审批”“网络能不能开”
+            或“失败后要不要提升权限重试”。这些问题不属于语言模型的自由发挥范围，而属于 harness 的控制平面。
+          </p>
+
+          <h2>ToolOrchestrator 是可靠性的落点</h2>
+          <p>
+            从公开源码看，工具执行的主路径可以概括成四步：先判断是否需要 approval，再选择 sandbox，再尝试执行，
+            如果被 sandbox 拒绝且策略允许，再进入更高权限的重试路径。
+          </p>
+
+          <p>
+            这也是 Codex 和“模型直接开 shell”的关键差异。shell 命令不是 prompt 里的一个字符串，而是一个要经过策略判断、沙箱选择、
+            审批事件、执行结果记录的系统动作。这样做会增加运行时复杂度，但它换来的是更清楚的责任边界。
+          </p>
+
+          <h2>为什么这条 loop 能扩展到多个产品面</h2>
+          <p>
+            OpenAI 后续 App Server 文章把同一件事从产品侧说得更明确：Web、CLI、IDE extension 和桌面 app 共享同一套 Codex harness。
+            换句话说，Codex 不是先做了一个 CLI，再把功能复制到其它端；更合理的读法是，它先形成一个 agent runtime，
+            再让不同 surface 通过协议进入这个 runtime。
+          </p>
+
+          <p>
+            这也解释了为什么 `openai-codex` 仓库里会同时出现 core、protocol、tui、exec、app-server、mcp、rollout、state 等模块。
+            如果只是一个终端工具，这些层次会显得过重；但如果目标是一个多端共享、可恢复、可治理的 coding agent runtime，这些层次就都变得必要。
+          </p>
+
+          <h2>这套设计的代价</h2>
+          <p>
+            厚 harness 的代价很直接：调试一轮失败任务时，你不能只看模型输出。你还要看输入上下文、history、tool events、approval events、
+            sandbox policy、rollout，以及工具执行前后的状态变化。
+          </p>
+
+          <p>
+            但这是值得付出的复杂度。coding agent 最危险的失败通常不发生在“模型说错一句话”，而发生在错误动作真的落到了文件系统、网络、
+            依赖环境或版本控制里。Codex 把这些现实动作放进运行时治理，而不是交给模型自觉。
+          </p>
+
+          <h2>一个需要保留的边界</h2>
+          <p>
+            不能把这套治理理解成“所有工具都天然安全”。官方 agent-loop 文章也提醒，Codex 的 sandbox developer message 约束的是 Codex 提供的 shell tool；
+            MCP 等外部工具需要各自负责 guardrails。也就是说，harness 可以统一很多事情，但外部能力接入仍然需要单独审计。
+          </p>
+
+          <h2>对 agent 系统设计的启示</h2>
+          <p>
+            Codex 给出的答案不是“写一个更大的 prompt”，而是把 agent loop 周围的东西认真系统化：
+            turn context、工具协议、审批、沙箱、历史、持久化和多端协议都要成为一等对象。
+          </p>
+
+          <p>
+            这也是我选择这篇作为 Codex 架构解析样板的原因。后续文章会继续拆上下文管理、权限系统、App Server、session persistence 和 multi-agent；
+            但所有这些主题最终都会回到同一个判断：真正能长期工作的 agent，靠的不是一条聪明的 loop，而是一套能约束、恢复和解释这条 loop 的 runtime。
+          </p>
+
+          <h2>参考资料</h2>
+          <ul>
+            <li><a href="https://openai.com/index/unrolling-the-codex-agent-loop/" target="_blank" rel="noopener">OpenAI: Unrolling the Codex agent loop</a></li>
+            <li><a href="https://openai.com/index/unlocking-the-codex-harness/" target="_blank" rel="noopener">OpenAI: Unlocking the Codex harness</a></li>
+            <li><a href="https://github.com/openai/codex" target="_blank" rel="noopener">openai/codex public repository</a></li>
+          </ul>
+        </div>
+      </article>
+
+      <aside class="article-aside">
+        <div class="aside-box">
+          <p class="aside-title">Article map</p>
+          <a href="#top">Overview</a>
+          <a href="https://openai.com/index/unrolling-the-codex-agent-loop/" target="_blank" rel="noopener">Official loop post</a>
+          <a href="https://openai.com/index/unlocking-the-codex-harness/" target="_blank" rel="noopener">Official harness post</a>
+          <a href="https://github.com/openai/codex" target="_blank" rel="noopener">OpenAI Codex repo</a>
+          <a href="/writing/">More writing</a>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="site-footer">
+      <p><a href="/writing/">Back to Writing</a></p>
+    </footer>
+  </div>
+</body>
+</html>
