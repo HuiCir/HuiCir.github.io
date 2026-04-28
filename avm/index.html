@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Token Never Sleeps Agent Virtual Machine 技术报告：外部编排、FSM、权限、验证、锁、恢复与实机 case。">
+  <meta name="theme-color" content="#f6f3ea">
+  <meta property="og:title" content="TNS AVM Technical Report">
+  <meta property="og:description" content="A deterministic, file-system-stateful orchestration runtime for long-horizon agent workflows.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://huicir.github.io/avm/">
+  <title>TNS AVM Technical Report</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+  <div class="page-shell page-shell-article">
+    <header class="site-header">
+      <a class="site-mark" href="/">Token Never Sleeps</a>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="/">Product</a>
+        <a href="/docs/">Docs</a>
+        <a href="https://github.com/HuiCir/token-never-sleeps" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+    </header>
+
+    <main class="article-layout">
+      <article class="essay">
+        <header class="essay-header" id="top">
+          <p class="eyebrow">Technical report · v1.0.2</p>
+          <h1>Token Never Sleeps Agent Virtual Machine</h1>
+          <p class="essay-dek">
+            TNS AVM 是一个 deterministic、file-system-stateful 的 agent orchestration runtime。它把自然语言任务编译成
+            明确的机器 contract，再用外部 loop 管理 executor、verifier、权限、validator、watchdog 和恢复路径。
+          </p>
+          <div class="essay-meta">
+            <span>2026-04-28</span>
+            <span>Source: /root/TNS_AVM_TECHNICAL_REPORT.md</span>
+            <a href="https://www.npmjs.com/package/token-never-sleeps" target="_blank" rel="noopener">npm v1.0.2</a>
+          </div>
+        </header>
+
+        <figure class="hero-figure">
+          <img src="/assets/tns-avm-machine.svg" alt="TNS AVM machine diagram.">
+          <figcaption>AVM 的关键边界：agent 是 coprocessor，外部 runtime 才是 controller。</figcaption>
+        </figure>
+
+        <div class="essay-body">
+          <h2>Abstract</h2>
+          <p>
+            TNS AVM 为长时 Claude agent workflow 提供一层可恢复、可验证、可审计的虚拟机。它定义了有限状态执行引擎、
+            轻量 ISA、分阶段 validator、权限 profile、resource lock、watchdog heartbeat 和文件系统状态总线。输入是
+            `task.md` 与 `tns_config.json`；输出是 `.tns/compiled/program.json` 以及一组运行时状态文件。
+          </p>
+
+          <div class="callout">
+            <p class="callout-title">Design claim</p>
+            <p>
+              long-horizon agent work 的核心约束不是“模型一次能想多远”，而是任务能否在 fresh context、失败、中断、权限门禁和验证环节之间继续推进。
+            </p>
+          </div>
+
+          <h2>Problem model</h2>
+          <p>TNS AVM 直接面对五类长期任务风险：</p>
+          <ul>
+            <li>进程死亡、网络失败或 usage limit 后，工作需要从磁盘状态恢复。</li>
+            <li>开放式 agent 容易 scope creep，必须由 runtime 固定 section 边界。</li>
+            <li>shell、文件和网络能力需要按 stage 控制，而不是全部放开。</li>
+            <li>输出必须由 verifier、validator 和 command hooks 系统验收。</li>
+            <li>调试需要可重放的 program、activity log 和状态快照。</li>
+          </ul>
+
+          <h2>Design principles</h2>
+          <div class="report-grid">
+            <div>
+              <strong>File system as state bus</strong>
+              <p>`.tns/` 内部用 JSON、JSONL 与 Markdown 存储 manifest、sections、reviews、handoff、locks 和 activity。</p>
+            </div>
+            <div>
+              <strong>Natural language to contract</strong>
+              <p>`tns compile` 把 task/config 编译成 `program.json`，使 section、validator、permission 和 external tools 显式化。</p>
+            </div>
+            <div>
+              <strong>Agent-as-coprocessor</strong>
+              <p>agent 不控制 loop。AVM 分配一个 section，agent 返回结构化结果，runtime 决定状态迁移。</p>
+            </div>
+            <div>
+              <strong>Staged validation</strong>
+              <p>preflight、pre_step、post_step、post_run 均可绑定 validator 与 command set，并由 policy 决定阻断或修复。</p>
+            </div>
+          </div>
+
+          <h2>Architecture</h2>
+          <pre><code>task.md + tns_config.json
+        │
+        ▼
+tns compile ───────────────► .tns/compiled/program.json
+        │
+        ▼
+tns run/start ──► executor ──► verifier ──► policy transition
+        │             │            │
+        ▼             ▼            ▼
+.tns/sections.json · reviews.json · handoff.md · activity.jsonl · locks/</code></pre>
+
+          <p>
+            CLI layer 提供 `init`、`compile`、`simulate`、`run`、`start`、`status`、`btw`、`approve`、`recover` 等操作；
+            core layer 负责 workflow、sections、FSM、agent bridge、state、runtime、policy、permissions、validators 与 command bridge。
+          </p>
+
+          <h2>AVM ISA</h2>
+          <p>
+            AVM 的 FSM 程序包含 `task`、`decision`、`loop`、`terminal` 四类 state。每个 state 可声明 `on_enter`
+            指令和有条件的 transitions。ISA 保持很小，目的是让 orchestration 可读、可模拟、可审计。
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Opcode</th><th>Type</th><th>Semantics</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>set</code></td><td>data</td><td>向 context dotted path 写入值。</td></tr>
+                <tr><td><code>inc</code> / <code>dec</code></td><td>data</td><td>对数值寄存器做加减，用于 retry、budget、loop counter。</td></tr>
+                <tr><td><code>append</code></td><td>data</td><td>把事件或中间值追加到数组路径。</td></tr>
+                <tr><td><code>if</code></td><td>control</td><td>按 condition 执行 then/else 指令块。</td></tr>
+                <tr><td><code>while</code></td><td>control</td><td>带 max_iterations 的受限循环，避免无限自扩张。</td></tr>
+                <tr><td><code>emit</code></td><td>side effect</td><td>向 simulation trace 写入事件。</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h2>State inventory</h2>
+          <p>关键状态文件不是隐式缓存，而是 operator 和工具都能直接读取的 runtime surface。</p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>File</th><th>Purpose</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>.tns/sections.json</code></td><td>tracked work items 与状态。</td></tr>
+                <tr><td><code>.tns/activity.jsonl</code></td><td>append-only event log。</td></tr>
+                <tr><td><code>.tns/reviews.json</code></td><td>verifier findings 与修复建议。</td></tr>
+                <tr><td><code>.tns/handoff.md</code></td><td>fresh context 之间的交接文本。</td></tr>
+                <tr><td><code>.tns/runtime.json</code></td><td>runner heartbeat、active section、agent deadline。</td></tr>
+                <tr><td><code>.tns/approvals.json</code></td><td>已授权和等待授权的 permission tags。</td></tr>
+                <tr><td><code>.tns/locks/*.lock</code></td><td>workspace、runner、state 等资源锁。</td></tr>
+                <tr><td><code>.tns/compiled/program.json</code></td><td>编译后的 AVM orchestration contract。</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h2>Validation and policy</h2>
+          <p>
+            AVM 将“验收”从 agent 的自我判断中拿出来。validator 可以检查文件存在、文本正则、JSON path、命令集合结果；
+            policy 再决定失败后是 `block_section`、`mark_needs_fix`、`freeze` 还是 `fail_run`。这让失败成为可路由状态，而不是日志里的一句抱怨。
+          </p>
+
+          <h2>Permissions and locks</h2>
+          <p>
+            permission profile 按 section 匹配 allowed bash commands、workspace-only path audit 和 approval tag。高风险步骤会冻结 workspace，
+            直到 operator 使用 `tns approve --tag ...` 授权。所有 mutating flow 使用 `.tns/locks/` 的命名锁，并通过 PID 与时间戳识别 stale lock。
+          </p>
+
+          <h2>Recovery model</h2>
+          <p>
+            运行时持续写 heartbeat；单个 Claude follow session 超过 `monitor.max_agent_runtime_seconds` 时会被 watchdog 标记为 retryable。
+            `tns recover` 清理 stale runtime、locks 和 lingering in_progress sections。若所有 sections 已经 terminal，semantic recovery 可以直接释放锁。
+          </p>
+
+          <h2>Validated case</h2>
+          <p>
+            audiobook-video template 是 AVM 思路的实机样例：它把“英文改写与 manifest”“媒体生成”“确定性剪辑与 QA”拆成三段，
+            对外部工具、资产文件、ffmpeg 输出和视频检查分别建 validator 与 approval boundary。这个 case 说明 TNS 不是只适合代码任务，
+            也适合包含生成式资产、命令行工具和严格验收的生产流程。
+          </p>
+        </div>
+      </article>
+
+      <aside class="article-aside">
+        <div class="aside-box">
+          <p class="aside-title">Report map</p>
+          <a href="#top">Overview</a>
+          <a href="/">Product homepage</a>
+          <a href="/docs/">CLI docs</a>
+          <a href="/assets/tns-avm-machine.svg" target="_blank" rel="noopener">Open diagram</a>
+          <a href="https://github.com/HuiCir/token-never-sleeps" target="_blank" rel="noopener">Repository</a>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="site-footer">
+      <p><a href="/">Back to Token Never Sleeps</a></p>
+    </footer>
+  </div>
+</body>
+</html>

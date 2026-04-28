@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Token Never Sleeps CLI docs: install, quick start, compile, run, status, permissions, recovery, templates and practical tips.">
+  <meta name="theme-color" content="#f6f3ea">
+  <meta property="og:title" content="Token Never Sleeps Docs">
+  <meta property="og:description" content="Quick start, CLI command set, workflow tips and real template cases.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://huicir.github.io/docs/">
+  <title>TNS Docs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+  <div class="page-shell page-shell-article">
+    <header class="site-header">
+      <a class="site-mark" href="/">Token Never Sleeps</a>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="/">Product</a>
+        <a href="/avm/">AVM Report</a>
+        <a href="https://www.npmjs.com/package/token-never-sleeps" target="_blank" rel="noopener">npm</a>
+        <a href="https://github.com/HuiCir/token-never-sleeps" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+    </header>
+
+    <main class="article-layout">
+      <article class="essay">
+        <header class="essay-header" id="top">
+          <p class="eyebrow">CLI docs · npm v1.0.2</p>
+          <h1>Token Never Sleeps 指令集与使用技巧</h1>
+          <p class="essay-dek">
+            这份文档覆盖安装、初始化、编译、运行、监控、权限审批、恢复、FSM 模拟和 template case。默认假设你已经有
+            Node.js 22+，并且 `claude` CLI 在 PATH 中可用。
+          </p>
+          <div class="essay-meta">
+            <span>Package: token-never-sleeps</span>
+            <span>Node.js 22+</span>
+            <span>tmux optional</span>
+          </div>
+        </header>
+
+        <div class="essay-body">
+          <h2>Install</h2>
+          <pre><code>npm install -g token-never-sleeps
+tns help</code></pre>
+          <p>
+            `tns` 是纯 TypeScript npm CLI。它保留本地 runner、状态追踪、executor/verifier workflow、tmux-aware startup、
+            plan import、artifact index 和 workspace templates。
+          </p>
+
+          <h2>Quick start</h2>
+          <pre><code>tns init --workspace ./my-task
+cd ./my-task
+
+tns compile --config ./tns_config.json
+tns doctor --config ./tns_config.json
+tns status --config ./tns_config.json
+tns run --config ./tns_config.json --once</code></pre>
+          <p>
+            `init` 会写入 `task.md`、`tns_config.json` 和 `.tns/`。首次运行前建议先 `compile` 和 `doctor`：
+            前者生成可读的 orchestration program，后者检查配置、二进制、tmux 和 workspace preflight。
+          </p>
+
+          <h2>Common loop</h2>
+          <pre><code># manual stepping
+tns run --config ./tns_config.json --once
+
+# long direct loop
+tns run --config ./tns_config.json
+
+# choose managed tmux when configured, otherwise direct
+tns start --config ./tns_config.json
+
+# read-only live snapshot during long runs
+tns btw --config ./tns_config.json --events 12 --reviews 5</code></pre>
+
+          <h2>Command reference</h2>
+          <div class="command-list">
+            <div><code>tns init</code><span>创建 workspace、task、config 和 `.tns/` 状态目录。</span></div>
+            <div><code>tns compile</code><span>把 task/config 编译为 `.tns/compiled/program.json`。</span></div>
+            <div><code>tns simulate</code><span>模拟配置或编译出的 FSM program，可用 `--set key=value` 注入上下文。</span></div>
+            <div><code>tns doctor</code><span>执行配置、binary、tmux 和 preflight 诊断。</span></div>
+            <div><code>tns status</code><span>读取并报告 sections、freeze、approvals、artifacts、locks、tmux 和 runtime。</span></div>
+            <div><code>tns btw</code><span>只读快照，不获取 workspace lock，适合长任务观察。</span></div>
+            <div><code>tns run</code><span>直接运行 TNS loop，`--once` 只推进一轮。</span></div>
+            <div><code>tns start</code><span>按配置选择 managed tmux 或 direct runner。</span></div>
+            <div><code>tns run-tmux</code><span>显式 tmux 模式；系统没有 tmux 时会 fail fast。</span></div>
+            <div><code>tns approve</code><span>授予一个 named permission tag，让被冻结的高权限步骤继续。</span></div>
+            <div><code>tns revoke</code><span>撤销已授予 tag，影响后续运行。</span></div>
+            <div><code>tns trace</code><span>查看最近 activity events、validator outcomes 和 section 轨迹。</span></div>
+            <div><code>tns recover</code><span>清理 stale runtime、stale locks 和 lingering in_progress sections。</span></div>
+            <div><code>tns plan-import</code><span>把 markdown plan 导入 tracked sections。</span></div>
+            <div><code>tns freeze</code><span>手动冻结 workspace。</span></div>
+            <div><code>tns unfreeze</code><span>解除 freeze 状态。</span></div>
+          </div>
+
+          <h2>Templates</h2>
+          <pre><code>tns init --workspace ./novel-project --template novel-writing
+tns init --workspace ./fsm-case --template fsm-control-flow</code></pre>
+          <p>
+            npm 包内置 `blank`、`novel-writing`、`fsm-control-flow`。archive 里还有一个完整的 `audiobook-video` 实机 template，
+            展示如何用 section、approval tag、command bridge 和 validator 管住外部媒体生成与 ffmpeg 剪辑。
+          </p>
+
+          <h2>Compile and synthesis</h2>
+          <pre><code>tns compile --config ./tns_config.json
+tns compile --config ./tns_config.json --synthesize
+tns compile --config ./tns_config.json --synthesize --apply</code></pre>
+          <p>
+            `compile` 的输出让 executor/verifier 不再临场猜测任务结构。`--synthesize` 会调用 compiler agent 生成 preflight、
+            permissions、validators、command hooks、policy 和 externals 的结构化 patch；`--apply` 把 patch 合回 config 后重新编译。
+          </p>
+
+          <h2>Permissions</h2>
+          <pre><code>{
+  "permissions": {
+    "default_profile": "standard",
+    "profiles": {
+      "standard": {
+        "permission_mode": "acceptEdits",
+        "allowed_bash_commands": ["pwd", "ls", "cat", "sed", "rg", "find", "git", "node"],
+        "workspace_only": true
+      },
+      "media_render": {
+        "permission_mode": "acceptEdits",
+        "allowed_bash_commands": ["node", "ffmpeg", "ffprobe"],
+        "requires_approval": "media-render",
+        "workspace_only": true
+      }
+    },
+    "section_profiles": [
+      { "match_title": "Deterministic edit and QA", "profile": "media_render" }
+    ]
+  }
+}</code></pre>
+          <p>
+            缺少 required approval 时，TNS 会 freeze workspace 并写入 `.tns/approvals.json`。人工确认后运行：
+          </p>
+          <pre><code>tns approve --config ./tns_config.json --tag media-render --note "operator reviewed"
+tns run --config ./tns_config.json --once</code></pre>
+
+          <h2>Monitoring and recovery</h2>
+          <pre><code>tns btw --config ./tns_config.json
+tns trace --config ./tns_config.json --limit 40
+tns recover --config ./tns_config.json
+tns recover --config ./tns_config.json --force</code></pre>
+          <p>
+            `btw` 是长任务最常用的只读观察面；`trace` 看事件轨迹；`recover` 用于清理 stale lock、runtime 与中断中的 section。
+            watchdog 由 `monitor.heartbeat_seconds`、`monitor.max_agent_runtime_seconds` 和 `monitor.kill_grace_seconds` 控制。
+          </p>
+
+          <h2>Practical tips</h2>
+          <ul>
+            <li>先把 `task.md` 写成可验收 section，不要让一个 section 同时承担探索、实现和 QA。</li>
+            <li>对外部工具步骤使用 approval tag；让 agent 先产出计划和 manifest，再放开生成或渲染权限。</li>
+            <li>长任务运行中优先使用 `tns btw`，避免监控命令扰动 runner 锁。</li>
+            <li>每次大幅改 task/config 后重新 `tns compile`，让 `.tns/compiled/program.json` 成为稳定 contract。</li>
+            <li>把确定性检查写成 command hooks 或 validators，而不是让 verifier 只做自然语言判断。</li>
+          </ul>
+
+          <h2>Audiobook-video case</h2>
+          <pre><code># archive template flow
+node scripts/check_manifest.mjs
+node scripts/check_manifest.mjs --assets
+node scripts/build_video.mjs
+node scripts/check_video.mjs</code></pre>
+          <p>
+            这个 case 的价值在于它不是“agent 写点文字”式 demo：它要求源章节、英文脚本、多 voice 资产、16:9 背景图、
+            BGM、ffmpeg 剪辑、字幕烧录和最终视频 QA 都可追踪。TNS 用 section 和 validator 把这条链路拆开，使失败可以定位到 manifest、
+            asset 或 render 阶段。
+          </p>
+        </div>
+      </article>
+
+      <aside class="article-aside">
+        <div class="aside-box">
+          <p class="aside-title">Docs map</p>
+          <a href="#top">Overview</a>
+          <a href="/">Product homepage</a>
+          <a href="/avm/">AVM report</a>
+          <a href="https://www.npmjs.com/package/token-never-sleeps" target="_blank" rel="noopener">npm package</a>
+          <a href="https://github.com/HuiCir/token-never-sleeps/blob/main/README.md" target="_blank" rel="noopener">README</a>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="site-footer">
+      <p><a href="/">Back to Token Never Sleeps</a></p>
+    </footer>
+  </div>
+</body>
+</html>
