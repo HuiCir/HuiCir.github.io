@@ -772,3 +772,255 @@ th {
     gap: 6px;
   }
 }
+
+/* ==========================================
+   Language switcher
+   ========================================== */
+
+.lang-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 4px;
+}
+
+.lang-switcher button {
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 11px;
+  font-family: "Manrope", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+
+.lang-switcher button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.lang-switcher button[aria-current="true"] {
+  background: var(--accent-deep);
+  border-color: var(--accent-deep);
+  color: #fff7f1;
+}
+
+/* ==========================================
+   Tutorial step list
+   ========================================== */
+
+.step-list {
+  list-style: none;
+  padding: 0;
+  counter-reset: step;
+}
+
+.step-list > li {
+  counter-increment: step;
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 20px;
+  padding: 28px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.step-list > li:first-child {
+  padding-top: 0;
+}
+
+.step-list > li:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.step-list > li::before {
+  content: counter(step, decimal-leading-zero);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff7f1;
+  font-family: "Newsreader", serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.step-list h3 {
+  margin: 0 0 8px;
+  font-family: "Newsreader", serif;
+  font-size: 1.45rem;
+  letter-spacing: 0;
+  line-height: 1.12;
+}
+
+.step-list p {
+  margin: 0 0 10px;
+  color: var(--muted);
+}
+
+.step-list pre {
+  margin: 6px 0 0;
+  overflow-x: auto;
+  padding: 14px 18px;
+  border-radius: 14px;
+  border: 1px solid rgba(34, 27, 20, 0.08);
+  background: #1f1a17;
+}
+
+.step-list pre code {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.9rem;
+  color: #f8efe5;
+}
+
+/* ==========================================
+   Tutorial cards
+   ========================================== */
+
+.tutorial-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.tutorial-tag {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(180, 79, 42, 0.1);
+  color: var(--accent-deep);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  margin-bottom: 10px;
+}
+
+.feature-card .tutorial-tag {
+  margin-bottom: 8px;
+}
+
+/* ==========================================
+   Code captions
+   ========================================== */
+
+.code-caption {
+  margin: 20px 0 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--accent-deep);
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+pre + .code-caption {
+  margin-top: -14px;
+  margin-bottom: 20px;
+}
+
+/* ==========================================
+   Case study extras
+   ========================================== */
+
+.case-section {
+  margin-top: 36px;
+}
+
+.case-section h3 {
+  font-family: "Newsreader", serif;
+  font-size: 1.55rem;
+  letter-spacing: 0;
+  line-height: 1.12;
+  margin: 0 0 12px;
+}
+
+.case-section p {
+  color: var(--muted);
+}
+
+.case-checklist {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 0;
+}
+
+.case-checklist li {
+  padding: 8px 0 8px 24px;
+  position: relative;
+  color: var(--muted);
+}
+
+.case-checklist li::before {
+  content: "âœ";
+  position: absolute;
+  left: 0;
+  color: var(--accent-deep);
+  font-weight: 700;
+}
+
+/* ==========================================
+   Improved typography & spacing
+   ========================================== */
+
+.essay-body p + p {
+  margin-top: -10px;
+}
+
+.essay-body h2 {
+  margin-top: 48px;
+}
+
+.step-list p code,
+.step-list li code,
+.case-section code {
+  color: var(--accent-deep);
+  background: rgba(180, 79, 42, 0.08);
+  border: 1px solid rgba(180, 79, 42, 0.12);
+  border-radius: 6px;
+  padding: 0.05rem 0.26rem;
+}
+
+/* ==========================================
+   Mobile refinements
+   ========================================== */
+
+@media (max-width: 640px) {
+  body {
+    line-height: 1.7;
+  }
+
+  .site-nav {
+    gap: 12px;
+  }
+
+  .site-nav a,
+  .lang-switcher button {
+    font-size: 0.82rem;
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .step-list > li {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .step-list > li::before {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+
+  .case-checklist li {
+    padding-left: 20px;
+  }
+}
