@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="TNS Audiobook Video case study: the complete orchestration process from chapter text to deterministic video editing. Demonstrates section splitting, approval tags, command bridges, and validators in practice.">
+  <meta name="theme-color" content="#f6f3ea">
+  <meta property="og:title" content="Audiobook Video Case Study | TNS Tutorials">
+  <meta property="og:description" content="A real-machine walkthrough of TNS orchestrating a media production pipeline.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://huicir.github.io/en/tutorials/audiobook-video/">
+  <title>Audiobook Video Case Study | TNS Tutorials</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/site.css">
+  <script src="/assets/site.js" defer></script>
+</head>
+<body>
+  <div class="page-shell page-shell-article">
+    <header class="site-header">
+      <a class="site-mark" href="/en/">Token Never Sleeps</a>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="/en/">Product</a>
+        <a href="/en/avm/">AVM Report</a>
+        <a href="/en/docs/">Docs</a>
+        <a href="/en/tutorials/">Tutorials</a>
+        <a href="https://github.com/HuiCir/token-never-sleeps" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+    </header>
+
+    <main class="article-layout">
+      <article class="essay">
+        <header class="essay-header" id="top">
+          <p class="eyebrow">Tutorial · Case Study</p>
+          <h1>Audiobook Video: From Chapter Text to Deterministic Editing</h1>
+          <p class="essay-dek">
+            This case study demonstrates how TNS orchestrates a complete media production pipeline: converting
+            Chinese chapter text into an English audiobook short, with manifest generation, multi-voice TTS,
+            background image and BGM generation, deterministic ffmpeg assembly, and final QA.
+          </p>
+          <div class="essay-meta">
+            <span>3 sections</span>
+            <span>2 approval tags</span>
+            <span>External tools: ffmpeg, ffprobe</span>
+          </div>
+        </header>
+
+        <div class="essay-body">
+          <h2>Overview</h2>
+          <p>
+            The audiobook-video template is a complete real-machine case from the TNS archive. It's not a
+            "the agent writes some text" demo — it requires the source chapter, English script, multi-voice
+            assets, 16:9 background image, BGM, ffmpeg editing, subtitle burn-in, and final video QA to all
+            be traceable and recoverable.
+          </p>
+
+          <div class="callout">
+            <p class="callout-title">Why this case matters</p>
+            <p>
+              It proves TNS isn't just for pure code tasks. Production pipelines involving generative assets,
+              external CLI tools, and strict acceptance criteria can gain governability through section splitting,
+              approval boundaries, and validators.
+            </p>
+          </div>
+
+          <h2>Task structure</h2>
+          <p>The entire workflow is split into 3 sections, each with clear inputs, outputs, and acceptance criteria:</p>
+
+          <div class="case-section">
+            <h3>Section 1: Manifest generation</h3>
+            <p>
+              Input: a Chinese source chapter. The executor agent rewrites the content into English and produces
+              <code>src/production_manifest.json</code>. The manifest includes:
+            </p>
+            <ul>
+              <li>English script (one line per subtitle)</li>
+              <li>Voice role assignments (which sentences use which voice profile)</li>
+              <li>Scene descriptions (background image prompts and BGM style hints)</li>
+              <li>Timestamp constraints (estimated duration per sentence, used for editing)</li>
+            </ul>
+            <p>The manifest is the "contract" for all subsequent steps — once generated, sections 2 and 3 never need to refer back to the source text.</p>
+            <p>Validation script: <code>node scripts/check_manifest.mjs</code></p>
+          </div>
+
+          <div class="case-section">
+            <h3>Section 2: Media asset generation</h3>
+            <p>Based on the manifest descriptions, generate all media assets:</p>
+            <ul>
+              <li>Speech files: use TTS or voice cloning to produce per-sentence speech clips for each role</li>
+              <li>Background image: generate a 16:9 image from the scene description</li>
+              <li>BGM: generate or select background music based on style hints</li>
+            </ul>
+            <p>This section requires <strong>external network access and generation APIs</strong>, so it uses the <code>media-assets</code> approval tag.</p>
+            <p>Validation script: <code>node scripts/check_manifest.mjs --assets</code></p>
+          </div>
+
+          <div class="case-section">
+            <h3>Section 3: Deterministic edit and QA</h3>
+            <p>Assemble all assets into the final video:</p>
+            <ul>
+              <li>Concatenate speech clips by timestamp using ffmpeg</li>
+              <li>Overlay the background image, mix multi-voice audio tracks</li>
+              <li>Burn in English subtitles</li>
+              <li>Mix in BGM</li>
+              <li>Output a 1080p H.264 video</li>
+            </ul>
+            <p>Build script: <code>node scripts/build_video.mjs</code></p>
+            <p>Validation script: <code>node scripts/check_video.mjs</code>, which verifies:</p>
+            <ul class="case-checklist">
+              <li>Resolution is 1920×1080</li>
+              <li>Both video and audio streams are present</li>
+              <li>Duration is within the expected range</li>
+              <li>Subtitle stream is correctly encoded</li>
+            </ul>
+          </div>
+
+          <h2>Permission &amp; approval tag design</h2>
+          <p>This is one of the most important design decisions in this case: different sections use different permission profiles.</p>
+
+          <pre><code>{
+  "permissions": {
+    "default_profile": "standard",
+    "profiles": {
+      "standard": {
+        "permission_mode": "acceptEdits",
+        "allowed_bash_commands": ["pwd", "ls", "cat", "sed", "rg", "find", "git", "node"],
+        "workspace_only": true
+      },
+      "media_assets": {
+        "permission_mode": "acceptEdits",
+        "allowed_bash_commands": ["node", "curl", "python3"],
+        "requires_approval": "media-assets",
+        "workspace_only": false
+      },
+      "media_render": {
+        "permission_mode": "acceptEdits",
+        "allowed_bash_commands": ["node", "ffmpeg", "ffprobe"],
+        "requires_approval": "media-render",
+        "workspace_only": true
+      }
+    },
+    "section_profiles": [
+      { "match_title": "Media generation", "profile": "media_assets" },
+      { "match_title": "Deterministic edit and QA", "profile": "media_render" }
+    ]
+  }
+}</code></pre>
+
+          <p>Design rationale:</p>
+          <ul>
+            <li><strong>standard profile</strong> — only safe local commands (ls, cat, git, node, etc.), confined to the workspace. Used for section 1 manifest generation.</li>
+            <li><strong>media_assets profile</strong> — allows network requests and Python for calling external TTS/image generation APIs. Gated by the <code>media-assets</code> approval tag so the operator reviews before granting.</li>
+            <li><strong>media_render profile</strong> — allows ffmpeg/ffprobe, but confined to the workspace to prevent system file access. Gated by <code>media-render</code> approval tag so media is verified before rendering.</li>
+          </ul>
+
+          <h2>Run flow</h2>
+          <p>The operator follows this sequence in the terminal:</p>
+
+          <pre><code># Initialize workspace (using audiobook-video template)
+tns init --workspace ./av-case --template audiobook-video
+cd ./av-case
+
+# Compile task and config
+tns compile --config ./tns_config.json
+
+# Run diagnostics
+tns doctor --config ./tns_config.json
+
+# First round (executes section 1: manifest)
+tns run --config ./tns_config.json --once
+
+# Before section 2, approve the media-assets tag
+tns approve --config ./tns_config.json --tag media-assets --note "assets reviewed"
+tns run --config ./tns_config.json --once
+
+# Before section 3, approve the media-render tag
+tns approve --config ./tns_config.json --tag media-render --note "media verified"
+tns run --config ./tns_config.json --once
+
+# Check final status
+tns status --config ./tns_config.json</code></pre>
+
+          <h2>Recovery scenario</h2>
+          <p>Suppose the process crashes during section 3's ffmpeg render (OOM, power loss, etc.):</p>
+
+          <pre><code># After reboot, enter the workspace
+cd ./av-case
+
+# Observe current state
+tns status --config ./tns_config.json
+# Output: section 3 state is in_progress, runtime is stale
+
+# Clean up residual state
+tns recover --config ./tns_config.json
+
+# Recompile (ensure the contract is up to date)
+tns compile --config ./tns_config.json
+
+# Resume (section 3 retries from the beginning)
+tns run --config ./tns_config.json --once</code></pre>
+
+          <p>
+            Because all intermediate assets (manifest, speech files, images, BGM) are persisted in
+            <code>.tns/</code> and the workspace, section 3 can safely retry from scratch without
+            regenerating media assets.
+          </p>
+
+          <h2>Key takeaways</h2>
+          <div class="report-grid">
+            <div>
+              <strong>Section boundaries are recovery boundaries</strong>
+              <p>Section 1's manifest is the input contract for section 2. If all three steps were crammed into one section, a crash would require restarting everything.</p>
+            </div>
+            <div>
+              <strong>Approval tags are human decision points</strong>
+              <p>Let the agent produce the manifest first. The operator reviews it before granting media generation permissions. Never give the agent full permissions from the start.</p>
+            </div>
+            <div>
+              <strong>Deterministic validation beats natural-language judgment</strong>
+              <p><code>check_video.mjs</code> uses ffprobe for numeric checks (resolution, duration, stream count) rather than asking a verifier to "look at the video."</p>
+            </div>
+            <div>
+              <strong>The file system is the state bus</strong>
+              <p>Manifest, speech clips, background images, and BGM all live on the file system. The operator can inspect intermediate outputs anytime with <code>ls</code> and <code>cat</code>.</p>
+            </div>
+          </div>
+
+          <h2>Adaptation ideas</h2>
+          <p>This template can be adapted into multiple media production workflows:</p>
+          <ul>
+            <li><strong>Podcast generation</strong>: drop the video track, keep multi-voice audio + BGM.</li>
+            <li><strong>Multilingual audiobooks</strong>: section 1 outputs multilingual manifests, section 2 generates speech per language.</li>
+            <li><strong>Slideshow videos</strong>: replace the single background image with multiple slides, switched by manifest timestamps.</li>
+            <li><strong>API-driven short videos</strong>: section 2 fetches content from a news API, section 3 auto-generates a daily summary video.</li>
+          </ul>
+          <p>The key is preserving the section-splitting and approval-boundary design philosophy, not just tweaking a few scripts.</p>
+        </div>
+      </article>
+
+      <aside class="article-aside">
+        <div class="aside-box">
+          <p class="aside-title">Case Map</p>
+          <a href="#top">Overview</a>
+          <a href="/en/tutorials/">Back to Tutorials</a>
+          <a href="/en/tutorials/getting-started/">Getting Started</a>
+          <a href="/en/docs/">CLI docs</a>
+          <a href="/en/avm/">AVM report</a>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="site-footer">
+      <p><a href="/en/tutorials/">Back to Tutorials</a></p>
+    </footer>
+  </div>
+</body>
+</html>

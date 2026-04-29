@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="TNS Getting Started Guide: complete steps from installation to your first runnable workspace.">
+  <meta name="theme-color" content="#f6f3ea">
+  <meta property="og:title" content="TNS Getting Started Guide">
+  <meta property="og:description" content="Build your first TNS workspace step by step.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://huicir.github.io/en/tutorials/getting-started/">
+  <title>Getting Started | TNS Tutorials</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/site.css">
+  <script src="/assets/site.js" defer></script>
+</head>
+<body>
+  <div class="page-shell page-shell-article">
+    <header class="site-header">
+      <a class="site-mark" href="/en/">Token Never Sleeps</a>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="/en/">Product</a>
+        <a href="/en/avm/">AVM Report</a>
+        <a href="/en/docs/">Docs</a>
+        <a href="/en/tutorials/">Tutorials</a>
+        <a href="https://github.com/HuiCir/token-never-sleeps" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+    </header>
+
+    <main class="article-layout">
+      <article class="essay">
+        <header class="essay-header" id="top">
+          <p class="eyebrow">Tutorial · Beginner</p>
+          <h1>Getting Started with TNS</h1>
+          <p class="essay-dek">
+            Build a runnable TNS workspace from scratch in 10 steps. By the end of this tutorial you'll
+            understand the core loop: init → compile → doctor → run → status.
+          </p>
+          <div class="essay-meta">
+            <span>Estimated time: 15 minutes</span>
+            <span>Requires Node.js 22+</span>
+            <span>Requires claude CLI</span>
+          </div>
+        </header>
+
+        <div class="essay-body">
+          <h2>Prerequisites</h2>
+          <p>Before starting, make sure your environment meets these requirements:</p>
+          <ol class="step-list">
+            <li>
+              <div>
+                <h3>Install Node.js 22 or later</h3>
+                <p>TNS is a TypeScript npm package and needs a Node.js runtime.</p>
+                <pre><code>node --version
+# Should output v22.x.x or higher</code></pre>
+              </div>
+            </li>
+            <li>
+              <div>
+                <h3>Verify the claude CLI is in your PATH</h3>
+                <p>TNS invokes agents through the <code>claude</code> CLI. Run this to confirm:</p>
+                <pre><code>claude --version
+# Should output a version number</code></pre>
+              </div>
+            </li>
+            <li>
+              <div>
+                <h3>(Optional) Install tmux</h3>
+                <p>tmux is not required, but recommended for managed runner mode. On macOS: <code>brew install tmux</code>.</p>
+              </div>
+            </li>
+          </ol>
+
+          <h2>Step 1: Install TNS</h2>
+          <pre><code>npm install -g token-never-sleeps
+tns help</code></pre>
+          <p>After a global install, the <code>tns</code> command is available in your terminal. <code>tns help</code> lists all subcommands.</p>
+
+          <h2>Step 2: Initialize a workspace</h2>
+          <p>Use <code>tns init</code> to create a new workspace. This generates <code>task.md</code>, <code>tns_config.json</code>, and the <code>.tns/</code> state directory.</p>
+          <pre><code>tns init --workspace ./hello-tns
+cd ./hello-tns
+ls -la</code></pre>
+          <p>You'll see this file structure:</p>
+          <pre><code>hello-tns/
+├── task.md              # Task description (you write this)
+├── tns_config.json      # Workspace configuration
+└── .tns/                # Runtime state directory</code></pre>
+
+          <h2>Step 3: Understand task.md</h2>
+          <p><code>task.md</code> is the core input to TNS. It describes the task goal, section breakdown, and acceptance criteria. A good task.md should:</p>
+          <ul>
+            <li><strong>Have a clear goal</strong>: state what to accomplish in one sentence.</li>
+            <li><strong>Verify each section</strong>: every section needs explicit inputs and acceptance conditions.</li>
+            <li><strong>Define clear boundaries</strong>: don't let one section handle exploration, implementation, and QA simultaneously.</li>
+          </ul>
+          <p>Open <code>task.md</code> — you'll find a template. Edit the goal and sections, then save.</p>
+
+          <h2>Step 4: Understand tns_config.json</h2>
+          <p><code>tns_config.json</code> controls workspace behavior. Key fields:</p>
+          <ul>
+            <li><code>workspace</code> — path, name, template info.</li>
+            <li><code>permissions</code> — permission profiles and section-to-profile mappings.</li>
+            <li><code>monitor</code> — watchdog heartbeat and agent timeout settings.</li>
+            <li><code>program</code> — optional explicit FSM program.</li>
+          </ul>
+          <p>For first-time use, the default config works well. Later you can optimize it with <code>tns compile --synthesize</code>.</p>
+
+          <h2>Step 5: Compile</h2>
+          <p><code>tns compile</code> turns task.md and tns_config.json into a structured orchestration program:</p>
+          <pre><code>tns compile --config ./tns_config.json</code></pre>
+          <p>The output file <code>.tns/compiled/program.json</code> contains:</p>
+          <ul>
+            <li>Task sections and required inputs</li>
+            <li>Bridge files and state files</li>
+            <li>Lifecycle and watchdog settings</li>
+            <li>Permission profiles and approval tags</li>
+            <li>Validators and command hooks</li>
+          </ul>
+          <p>After compilation, the executor and verifier no longer need to "guess" the task structure — everything is explicit in the contract.</p>
+
+          <h2>Step 6: Run doctor diagnostics</h2>
+          <p>Before the first run, run <code>tns doctor</code>:</p>
+          <pre><code>tns doctor --config ./tns_config.json</code></pre>
+          <p>Doctor checks:</p>
+          <ul>
+            <li>Config syntax and field completeness</li>
+            <li>Required binaries (node, claude, optional tmux)</li>
+            <li>Workspace directory structure and permissions</li>
+            <li>Preflight conditions</li>
+          </ul>
+          <p>If doctor reports any issues, fix them before continuing.</p>
+
+          <h2>Step 7: First run</h2>
+          <p>Use the <code>--once</code> flag for a single-step run to observe the full TNS loop:</p>
+          <pre><code>tns run --config ./tns_config.json --once</code></pre>
+          <p>During the run you'll see:</p>
+          <ol>
+            <li>The runtime selects the current section</li>
+            <li>The executor agent is invoked to process that section</li>
+            <li>The verifier agent checks the output and produces a review</li>
+            <li>Policy decides the state transition based on validation results</li>
+          </ol>
+
+          <h2>Step 8: Check status</h2>
+          <p>After running, use <code>tns status</code> to inspect the workspace's current state:</p>
+          <pre><code>tns status --config ./tns_config.json</code></pre>
+          <p>Status reports:</p>
+          <ul>
+            <li>Completion state of each section</li>
+            <li>Any freezes or pending approvals</li>
+            <li>Runtime heartbeat and active agent info</li>
+            <li>Artifact and lock states</li>
+          </ul>
+
+          <h2>Step 9: Monitor long tasks</h2>
+          <p>For multi-round tasks, use <code>tns btw</code> for read-only observation (doesn't contend for the workspace lock):</p>
+          <pre><code>tns btw --config ./tns_config.json --events 12 --reviews 5</code></pre>
+          <p>Use <code>tns trace</code> to view recent event history:</p>
+          <pre><code>tns trace --config ./tns_config.json --limit 40</code></pre>
+
+          <h2>Step 10: Recovery and cleanup</h2>
+          <p>If a task is interrupted (process death, network failure, etc.), use <code>tns recover</code> to clean up residual state:</p>
+          <pre><code>tns recover --config ./tns_config.json
+# For forced cleanup:
+tns recover --config ./tns_config.json --force</code></pre>
+          <p>After recovery, you can resume directly — TNS restores context from the state files in <code>.tns/</code>.</p>
+
+          <h2 id="next">Next steps</h2>
+          <ul>
+            <li><a class="text-link" href="/en/avm/">Read the AVM technical report</a> — understand the FSM, ISA, and state bus in depth.</li>
+            <li><a class="text-link" href="/en/docs/">Browse the full CLI reference</a> — all commands and configuration options.</li>
+            <li><a class="text-link" href="/en/tutorials/audiobook-video/">Audiobook Video case study</a> — see TNS orchestrate a complete media production pipeline.</li>
+            <li>Try <code>tns init --template fsm-control-flow</code> — explore explicit FSM programming.</li>
+          </ul>
+        </div>
+      </article>
+
+      <aside class="article-aside">
+        <div class="aside-box">
+          <p class="aside-title">Tutorial Map</p>
+          <a href="#top">Prerequisites</a>
+          <a href="/en/tutorials/">Back to Tutorials</a>
+          <a href="/en/docs/">CLI docs</a>
+          <a href="/en/avm/">AVM report</a>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="site-footer">
+      <p><a href="/en/tutorials/">Back to Tutorials</a></p>
+    </footer>
+  </div>
+</body>
+</html>
