@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="TNS 快速入门指南：从安装到第一个可运行 workspace 的完整步骤。">
+  <meta name="theme-color" content="#f6f3ea">
+  <meta property="og:title" content="TNS Getting Started Guide">
+  <meta property="og:description" content="Build your first TNS workspace step by step.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://huicir.github.io/tutorials/getting-started/">
+  <title>Getting Started | TNS Tutorials</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/site.css">
+  <script src="/assets/site.js" defer></script>
+</head>
+<body>
+  <div class="page-shell page-shell-article">
+    <header class="site-header">
+      <a class="site-mark" href="/">Token Never Sleeps</a>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="/">Product</a>
+        <a href="/avm/">AVM Report</a>
+        <a href="/docs/">Docs</a>
+        <a href="/tutorials/">Tutorials</a>
+        <a href="https://github.com/HuiCir/token-never-sleeps" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+    </header>
+
+    <main class="article-layout">
+      <article class="essay">
+        <header class="essay-header" id="top">
+          <p class="eyebrow">Tutorial · 入门</p>
+          <h1>Getting Started with TNS</h1>
+          <p class="essay-dek">
+            从零开始，用 10 步构建一个可运行的 TNS workspace。完成本教程后，你将理解 TNS 的核心循环：
+            init → compile → doctor → run → status。
+          </p>
+          <div class="essay-meta">
+            <span>预计时间：15 分钟</span>
+            <span>需要 Node.js 22+</span>
+            <span>需要 claude CLI</span>
+          </div>
+        </header>
+
+        <div class="essay-body">
+          <h2>前提条件</h2>
+          <p>开始之前，确保你的环境满足以下要求：</p>
+          <ol class="step-list">
+            <li>
+              <div>
+                <h3>安装 Node.js 22 或更高版本</h3>
+                <p>TNS 是 TypeScript npm 包，需要 Node.js 运行时。</p>
+                <pre><code>node --version
+# 应输出 v22.x.x 或更高</code></pre>
+              </div>
+            </li>
+            <li>
+              <div>
+                <h3>确认 claude CLI 在 PATH 中</h3>
+                <p>TNS 通过 <code>claude</code> CLI 调用 agent。运行以下命令确认可用：</p>
+                <pre><code>claude --version
+# 应输出版本号</code></pre>
+              </div>
+            </li>
+            <li>
+              <div>
+                <h3>（可选）安装 tmux</h3>
+                <p>tmux 不是必需的，但推荐用于 managed runner 模式。macOS 上 <code>brew install tmux</code> 即可。</p>
+              </div>
+            </li>
+          </ol>
+
+          <h2>Step 1：安装 TNS</h2>
+          <pre><code>npm install -g token-never-sleeps
+tns help</code></pre>
+          <p>全局安装后，<code>tns</code> 命令即可在终端中使用。<code>tns help</code> 列出所有可用子命令。</p>
+
+          <h2>Step 2：初始化 workspace</h2>
+          <p>用 <code>tns init</code> 创建一个新的 workspace。这个命令会生成 <code>task.md</code>、<code>tns_config.json</code> 和 <code>.tns/</code> 状态目录。</p>
+          <pre><code>tns init --workspace ./hello-tns
+cd ./hello-tns
+ls -la</code></pre>
+          <p>你会看到以下文件结构：</p>
+          <pre><code>hello-tns/
+├── task.md              # 任务描述（你写）
+├── tns_config.json      # workspace 配置
+└── .tns/                # 运行时状态目录</code></pre>
+
+          <h2>Step 3：理解 task.md</h2>
+          <p><code>task.md</code> 是 TNS 的核心输入。它描述任务目标、section 拆分和验收标准。一个良好的 task.md 应该：</p>
+          <ul>
+            <li><strong>目标明确</strong>：一句话说清楚要完成什么。</li>
+            <li><strong>Section 可验证</strong>：每个 section 有明确的输入和验收条件。</li>
+            <li><strong>边界清晰</strong>：不要让一个 section 同时承担探索、实现和 QA。</li>
+          </ul>
+          <p>打开 <code>task.md</code>，你会看到一个模板结构。按需修改目标和 section，然后保存。</p>
+
+          <h2>Step 4：理解 tns_config.json</h2>
+          <p><code>tns_config.json</code> 控制 workspace 的行为。关键字段：</p>
+          <ul>
+            <li><code>workspace</code> — 路径、名称、模板信息。</li>
+            <li><code>permissions</code> — 权限 profile 和 section-profile 映射。</li>
+            <li><code>monitor</code> — watchdog heartbeat 和 agent 超时设置。</li>
+            <li><code>program</code> — 可选的显式 FSM 程序。</li>
+          </ul>
+          <p>首次使用时，默认配置即可满足大部分需求。后续可以通过 <code>tns compile --synthesize</code> 自动优化。</p>
+
+          <h2>Step 5：编译</h2>
+          <p><code>tns compile</code> 将 task.md 和 tns_config.json 编译为结构化的 orchestration program：</p>
+          <pre><code>tns compile --config ./tns_config.json</code></pre>
+          <p>输出文件 <code>.tns/compiled/program.json</code> 包含了：</p>
+          <ul>
+            <li>task section 和 required inputs</li>
+            <li>bridge files 和 state files</li>
+            <li>lifecycle 和 watchdog 设置</li>
+            <li>permission profiles 和 approval tags</li>
+            <li>validators 和 command hooks</li>
+          </ul>
+          <p>编译后，executor 和 verifier 不再需要"猜测"任务结构——一切都在 contract 中明确定义。</p>
+
+          <h2>Step 6：运行 doctor 诊断</h2>
+          <p>首次运行前，建议先执行 <code>tns doctor</code>：</p>
+          <pre><code>tns doctor --config ./tns_config.json</code></pre>
+          <p>doctor 检查以下内容：</p>
+          <ul>
+            <li>配置文件语法和字段完整性</li>
+            <li>必需二进制文件（node、claude、可选 tmux）</li>
+            <li>workspace 目录结构和权限</li>
+            <li>preflight 条件是否满足</li>
+          </ul>
+          <p>如果 doctor 报告任何问题，先修复再继续。</p>
+
+          <h2>Step 7：第一次运行</h2>
+          <p>使用 <code>--once</code> 标志执行单步运行，观察 TNS 的完整循环：</p>
+          <pre><code>tns run --config ./tns_config.json --once</code></pre>
+          <p>运行时你会看到：</p>
+          <ol>
+            <li>runtime 选择当前 section</li>
+            <li>executor agent 被调用，处理该 section</li>
+            <li>verifier agent 检查输出，产生 review</li>
+            <li>policy 根据验证结果决定状态迁移</li>
+          </ol>
+
+          <h2>Step 8：查看状态</h2>
+          <p>运行后，用 <code>tns status</code> 查看 workspace 的当前状态：</p>
+          <pre><code>tns status --config ./tns_config.json</code></pre>
+          <p>status 报告：</p>
+          <ul>
+            <li>每个 section 的完成状态</li>
+            <li>是否有 freeze 或 pending approval</li>
+            <li>runtime heartbeat 和 active agent 信息</li>
+            <li>artifacts 和 locks 状态</li>
+          </ul>
+
+          <h2>Step 9：监控长任务</h2>
+          <p>对于需要多轮推进的任务，使用 <code>tns btw</code> 进行只读观察（不抢 workspace lock）：</p>
+          <pre><code>tns btw --config ./tns_config.json --events 12 --reviews 5</code></pre>
+          <p>使用 <code>tns trace</code> 查看最近的事件轨迹：</p>
+          <pre><code>tns trace --config ./tns_config.json --limit 40</code></pre>
+
+          <h2>Step 10：恢复与清理</h2>
+          <p>如果任务中断（进程死亡、网络失败等），使用 <code>tns recover</code> 清理残留状态：</p>
+          <pre><code>tns recover --config ./tns_config.json
+# 如果需要强制清理：
+tns recover --config ./tns_config.json --force</code></pre>
+          <p>恢复后可以直接继续运行——TNS 从 <code>.tns/</code> 中的状态文件恢复上下文。</p>
+
+          <h2 id="next">下一步</h2>
+          <ul>
+            <li><a class="text-link" href="/avm/">阅读 AVM 技术报告</a> — 深入理解 FSM、ISA 和状态总线。</li>
+            <li><a class="text-link" href="/docs/">查阅 CLI 完整指令集</a> — 所有命令和配置选项。</li>
+            <li><a class="text-link" href="/tutorials/audiobook-video/">Audiobook Video 实机案例</a> — 看 TNS 如何编排完整的媒体生产流程。</li>
+            <li>试试 <code>tns init --template fsm-control-flow</code> — 探索显式 FSM 编程。</li>
+          </ul>
+        </div>
+      </article>
+
+      <aside class="article-aside">
+        <div class="aside-box">
+          <p class="aside-title">教程进度</p>
+          <a href="#top">前提条件</a>
+          <a href="/tutorials/">返回教程首页</a>
+          <a href="/docs/">CLI 文档</a>
+          <a href="/avm/">AVM 报告</a>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="site-footer">
+      <p><a href="/tutorials/">Back to Tutorials</a></p>
+    </footer>
+  </div>
+</body>
+</html>
