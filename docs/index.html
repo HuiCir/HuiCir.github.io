@@ -118,6 +118,107 @@ tns compile --config ./tns_config.json --synthesize --apply</code></pre>
             permissions、validators、command hooks、policy 和 externals 的结构化 patch；`--apply` 把 patch 合回 config 后重新编译。
           </p>
 
+          <h2>FSM program — 手工编写替代 compiler agent</h2>
+          <p>
+            <code>tns compile --synthesize</code> 依赖 compiler agent 推断任务结构，这对于探索性任务很方便，
+            但对于需要严格可复现的生产任务，<strong>手工编写 <code>config.program</code> 是更稳定的方案</strong>。
+            手工编写的 FSM 程序不依赖 agent 推断，每次运行行为完全一致，且可以直接进入版本控制。
+          </p>
+
+          <h3>State 类型</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>State</th><th>用途</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>task</code></td><td>执行一个工作 section，绑定 executor/verifier</td></tr>
+                <tr><td><code>decision</code></td><td>条件分支，根据 context 数据选择下一跳</td></tr>
+                <tr><td><code>loop</code></td><td>带 <code>max_iterations</code> 的受限循环，防止无限自扩张</td></tr>
+                <tr><td><code>terminal</code></td><td>终止状态，标记任务完成</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>AVM ISA 指令集</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Opcode</th><th>类型</th><th>语义</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>set</code></td><td>data</td><td>向 context 的 dotted path 写入值。例：<code>{"set": ["retries", 0]}</code></td></tr>
+                <tr><td><code>inc</code></td><td>data</td><td>对数值寄存器 +1，用于 retry counter、budget 递减</td></tr>
+                <tr><td><code>dec</code></td><td>data</td><td>对数值寄存器 -1，用于倒计数、剩余步骤</td></tr>
+                <tr><td><code>append</code></td><td>data</td><td>将事件或中间值追加到数组路径</td></tr>
+                <tr><td><code>if</code></td><td>control</td><td>按 condition 执行 then/else 指令块</td></tr>
+                <tr><td><code>while</code></td><td>control</td><td>带 <code>max_iterations</code> 的受限循环，避免死循环</td></tr>
+                <tr><td><code>emit</code></td><td>side effect</td><td>向 simulation trace 写入事件，用于调试和审计</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>手工编写示例</h3>
+          <p>以下 <code>config.program</code> 定义一个简单的三步流程：初始化 → 条件判断 → 执行或跳过：</p>
+          <pre><code>{
+  "program": {
+    "initial": "init",
+    "states": {
+      "init": {
+        "type": "task",
+        "section": "初始化环境",
+        "on_enter": [
+          {"set": ["step_count", 0]},
+          {"set": ["need_extra", false]}
+        ],
+        "transitions": [
+          {"target": "check_extra"}
+        ]
+      },
+      "check_extra": {
+        "type": "decision",
+        "on_enter": [
+          {"if": {
+            "condition": {"path": "need_extra", "op": "eq", "value": true},
+            "then": [{"emit": "branching to extra step"}],
+            "else": [{"emit": "skipping extra, going to done"}]
+          }}
+        ],
+        "transitions": [
+          {"target": "extra_step", "condition": {"path": "need_extra", "op": "eq", "value": true}},
+          {"target": "done", "condition": {"path": "need_extra", "op": "eq", "value": false}}
+        ]
+      },
+      "extra_step": {
+        "type": "task",
+        "section": "额外处理",
+        "on_enter": [
+          {"inc": "step_count"}
+        ],
+        "transitions": [
+          {"target": "done"}
+        ]
+      },
+      "done": {
+        "type": "terminal",
+        "on_enter": [
+          {"emit": "task complete"}
+        ]
+      }
+    }
+  }
+}</code></pre>
+
+          <p>使用 <code>tns simulate</code> 在运行前验证 FSM：</p>
+          <pre><code>tns simulate --config ./tns_config.json
+tns simulate --config ./tns_config.json --set need_extra=true --compact</code></pre>
+
+          <p>
+            <strong>手工编写 vs compiler agent：</strong>compiler agent 适合快速原型，但输出依赖模型推断，可能在不同运行间产生变体。
+            手工 <code>config.program</code> 是确定性 artifact，可以直接 code review、diff、签入 git，
+            且不消耗 agent token。对于生产级任务，推荐先手工定义 FSM 骨架，仅在需要补充细节时使用 <code>--synthesize</code>。
+          </p>
+
           <h2>Permissions</h2>
           <pre><code>{
   "permissions": {

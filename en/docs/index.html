@@ -122,6 +122,111 @@ tns compile --config ./tns_config.json --synthesize --apply</code></pre>
             policy, and externals. <code>--apply</code> merges the patch back into config and recompiles.
           </p>
 
+          <h2>FSM program — manual authoring over compiler agent</h2>
+          <p>
+            <code>tns compile --synthesize</code> relies on a compiler agent to infer task structure. That's convenient
+            for exploration, but for production tasks that demand strict reproducibility,
+            <strong>hand-authoring <code>config.program</code> is the more stable approach</strong>.
+            A hand-written FSM program doesn't depend on agent inference — it behaves identically on every run and
+            can be directly version-controlled.
+          </p>
+
+          <h3>State types</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>State</th><th>Purpose</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>task</code></td><td>Execute a work section, bound to executor/verifier</td></tr>
+                <tr><td><code>decision</code></td><td>Conditional branch; selects the next transition based on context data</td></tr>
+                <tr><td><code>loop</code></td><td>Bounded loop with <code>max_iterations</code> to prevent unbounded expansion</td></tr>
+                <tr><td><code>terminal</code></td><td>Terminal state; marks the task as complete</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>AVM ISA — instruction set</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Opcode</th><th>Type</th><th>Semantics</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>set</code></td><td>data</td><td>Write a value to a context dotted path. E.g. <code>{"set": ["retries", 0]}</code></td></tr>
+                <tr><td><code>inc</code></td><td>data</td><td>Increment a numeric register (+1) — retry counters, budget tracking</td></tr>
+                <tr><td><code>dec</code></td><td>data</td><td>Decrement a numeric register (−1) — countdown, remaining steps</td></tr>
+                <tr><td><code>append</code></td><td>data</td><td>Append an event or intermediate value to an array path</td></tr>
+                <tr><td><code>if</code></td><td>control</td><td>Execute then/else instruction blocks based on a condition</td></tr>
+                <tr><td><code>while</code></td><td>control</td><td>Bounded loop with <code>max_iterations</code> to prevent infinite loops</td></tr>
+                <tr><td><code>emit</code></td><td>side effect</td><td>Write an event to the simulation trace for debugging and audit</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Hand-written example</h3>
+          <p>A <code>config.program</code> defining a simple three-step flow: initialize → conditional branch → execute or skip:</p>
+          <pre><code>{
+  "program": {
+    "initial": "init",
+    "states": {
+      "init": {
+        "type": "task",
+        "section": "Initialize environment",
+        "on_enter": [
+          {"set": ["step_count", 0]},
+          {"set": ["need_extra", false]}
+        ],
+        "transitions": [
+          {"target": "check_extra"}
+        ]
+      },
+      "check_extra": {
+        "type": "decision",
+        "on_enter": [
+          {"if": {
+            "condition": {"path": "need_extra", "op": "eq", "value": true},
+            "then": [{"emit": "branching to extra step"}],
+            "else": [{"emit": "skipping extra, going to done"}]
+          }}
+        ],
+        "transitions": [
+          {"target": "extra_step", "condition": {"path": "need_extra", "op": "eq", "value": true}},
+          {"target": "done", "condition": {"path": "need_extra", "op": "eq", "value": false}}
+        ]
+      },
+      "extra_step": {
+        "type": "task",
+        "section": "Extra processing",
+        "on_enter": [
+          {"inc": "step_count"}
+        ],
+        "transitions": [
+          {"target": "done"}
+        ]
+      },
+      "done": {
+        "type": "terminal",
+        "on_enter": [
+          {"emit": "task complete"}
+        ]
+      }
+    }
+  }
+}</code></pre>
+
+          <p>Validate the FSM before running with <code>tns simulate</code>:</p>
+          <pre><code>tns simulate --config ./tns_config.json
+tns simulate --config ./tns_config.json --set need_extra=true --compact</code></pre>
+
+          <p>
+            <strong>Manual authoring vs. compiler agent:</strong> the compiler agent is great for rapid prototyping,
+            but its output depends on model inference and may vary between runs.
+            A hand-written <code>config.program</code> is a deterministic artifact — it can be code-reviewed, diffed,
+            checked into git, and costs zero agent tokens. For production-grade tasks, define the FSM skeleton by hand
+            first, and use <code>--synthesize</code> only to fill in supplementary details.
+          </p>
+
           <h2>Permissions</h2>
           <pre><code>{
   "permissions": {
