@@ -143,19 +143,66 @@ p, li {
 
 .product-hero {
   grid-template-columns: 1fr;
-  gap: 32px;
+  gap: 28px;
   align-items: start;
+  padding: 48px 0 28px;
 }
 
 .product-hero .hero-copy {
-  background:
-    linear-gradient(135deg, rgba(255, 251, 245, 0.95), rgba(255, 246, 236, 0.88)),
-    radial-gradient(circle at top right, rgba(180, 79, 42, 0.13), transparent 34%);
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  padding: 0;
 }
 
 .product-hero h1 {
-  max-width: 14ch;
+  max-width: 18ch;
   font-size: clamp(1.85rem, 3.4vw, 3.2rem);
+  margin: 0;
+}
+
+.product-hero .hero-summary {
+  max-width: 64ch;
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+.product-hero .hero-eyebrow {
+  margin-bottom: 8px;
+}
+
+.product-hero .hero-metrics {
+  max-width: 780px;
+}
+
+.product-hero .install-strip {
+  max-width: 560px;
+}
+
+.product-hero .hero-diagram {
+  margin-top: 12px;
+  padding: 32px;
+}
+
+.product-hero .hero-diagram img {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+@media (max-width: 640px) {
+  .product-hero {
+    padding: 32px 0 20px;
+  }
+
+  .product-hero .hero-diagram {
+    padding: 18px;
+  }
+
+  .product-hero .install-strip {
+    max-width: none;
+  }
 }
 
 .hero-diagram {

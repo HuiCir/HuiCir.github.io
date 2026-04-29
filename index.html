@@ -32,34 +32,32 @@
 
     <main>
       <section class="hero product-hero">
-        <div class="hero-copy">
-          <p class="eyebrow">Agent external orchestration · npm v1.0.2</p>
-          <h1>让 agent 在长任务里不靠记忆续命。</h1>
-          <p class="hero-summary">
-            Token Never Sleeps 把 `task.md` 编译成一个可执行的 AVM contract，再由外部 runtime 调度 executor、verifier、权限、
-            watchdog、状态文件和恢复路径。模型只做一个 bounded step；真正的长时控制权留在 agent 外部。
-          </p>
-          <div class="install-strip" aria-label="Install command">
-            <code>npm install -g token-never-sleeps</code>
+        <p class="eyebrow hero-eyebrow">Agent external orchestration · npm v1.0.2</p>
+        <h1>让 agent 在长任务里不靠记忆续命。</h1>
+        <p class="hero-summary">
+          Token Never Sleeps 把 <code>task.md</code> 编译成一个可执行的 AVM contract，再由外部 runtime 调度 executor、verifier、权限、
+          watchdog、状态文件和恢复路径。模型只做一个 bounded step；真正的长时控制权留在 agent 外部。
+        </p>
+        <div class="install-strip" aria-label="Install command">
+          <code>npm install -g token-never-sleeps</code>
+        </div>
+        <div class="hero-metrics" aria-label="TNS summary">
+          <div>
+            <span>Runtime</span>
+            <strong>external loop, not one giant prompt</strong>
           </div>
-          <div class="hero-metrics" aria-label="TNS summary">
-            <div>
-              <span>Runtime</span>
-              <strong>external loop, not one giant prompt</strong>
-            </div>
-            <div>
-              <span>State</span>
-              <strong>plain files under .tns/</strong>
-            </div>
-            <div>
-              <span>Work style</span>
-              <strong>long-horizon, recoverable, auditable</strong>
-            </div>
+          <div>
+            <span>State</span>
+            <strong>plain files under .tns/</strong>
           </div>
-          <div class="hero-actions">
-            <a class="button button-primary" href="/docs/">Quick start</a>
-            <a class="button button-secondary" href="/avm/">Read AVM report</a>
+          <div>
+            <span>Work style</span>
+            <strong>long-horizon, recoverable, auditable</strong>
           </div>
+        </div>
+        <div class="hero-actions">
+          <a class="button button-primary" href="/docs/">Quick start</a>
+          <a class="button button-secondary" href="/avm/">Read AVM report</a>
         </div>
         <figure class="hero-diagram">
           <img src="/assets/tns-avm-machine.svg" alt="Token Never Sleeps AVM external orchestration architecture.">
