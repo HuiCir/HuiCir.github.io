@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Token Never Sleeps Agent Virtual Machine technical report: external orchestration, FSM, permissions, validation, locks, recovery, and real-machine case.">
+  <meta name="theme-color" content="#f6f3ea">
+  <meta property="og:title" content="TNS AVM Technical Report">
+  <meta property="og:description" content="A deterministic, file-system-stateful orchestration runtime for long-horizon agent workflows.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://huicir.github.io/en/avm/">
+  <title>TNS AVM Technical Report</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/site.css">
+  <script src="/assets/site.js" defer></script>
+</head>
+<body>
+  <div class="page-shell page-shell-article">
+    <header class="site-header">
+      <a class="site-mark" href="/en/">Token Never Sleeps</a>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="/en/">Product</a>
+        <a href="/en/docs/">Docs</a>
+        <a href="/en/tutorials/">Tutorials</a>
+        <a href="https://github.com/HuiCir/token-never-sleeps" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+    </header>
+
+    <main class="article-layout">
+      <article class="essay">
+        <header class="essay-header" id="top">
+          <p class="eyebrow">Technical report · v1.0.2</p>
+          <h1>Token Never Sleeps Agent Virtual Machine</h1>
+          <p class="essay-dek">
+            TNS AVM is a deterministic, file-system-stateful agent orchestration runtime. It compiles natural-language
+            tasks into explicit machine contracts, then manages executor, verifier, permissions, validators, watchdog,
+            and recovery paths through an external loop.
+          </p>
+          <div class="essay-meta">
+            <span>2026-04-28</span>
+            <span>Source: /root/TNS_AVM_TECHNICAL_REPORT.md</span>
+            <a href="https://www.npmjs.com/package/token-never-sleeps" target="_blank" rel="noopener">npm v1.0.2</a>
+          </div>
+        </header>
+
+        <figure class="hero-figure">
+          <img src="/assets/tns-avm-machine.svg" alt="TNS AVM machine diagram.">
+          <figcaption>The critical boundary: the agent is a coprocessor; the external runtime is the controller.</figcaption>
+        </figure>
+
+        <div class="essay-body">
+          <h2>Abstract</h2>
+          <p>
+            TNS AVM provides a recoverable, verifiable, auditable virtual machine layer for long-horizon Claude agent
+            workflows. It defines a finite-state execution engine, lightweight ISA, staged validators, permission profiles,
+            resource locks, watchdog heartbeat, and a file-system state bus. Inputs are <code>task.md</code> and
+            <code>tns_config.json</code>; outputs are <code>.tns/compiled/program.json</code> and a set of runtime state files.
+          </p>
+
+          <div class="callout">
+            <p class="callout-title">Design claim</p>
+            <p>
+              The core constraint of long-horizon agent work isn't "how far can a model think in one pass" — it's whether
+              the task can keep making progress across fresh contexts, failures, interruptions, permission gates, and
+              verification checkpoints.
+            </p>
+          </div>
+
+          <h2>Problem model</h2>
+          <p>TNS AVM directly addresses five classes of long-task risk:</p>
+          <ul>
+            <li>After process death, network failure, or usage limits, work must resume from disk state.</li>
+            <li>Open-ended agents drift toward scope creep; the runtime must enforce section boundaries.</li>
+            <li>Shell, file, and network capabilities need per-stage control, not a blanket grant.</li>
+            <li>Output must pass systematic acceptance through verifiers, validators, and command hooks.</li>
+            <li>Debugging requires replayable programs, activity logs, and state snapshots.</li>
+          </ul>
+
+          <h2>Design principles</h2>
+          <div class="report-grid">
+            <div>
+              <strong>File system as state bus</strong>
+              <p><code>.tns/</code> stores manifest, sections, reviews, handoff, locks, and activity as JSON, JSONL, and Markdown.</p>
+            </div>
+            <div>
+              <strong>Natural language to contract</strong>
+              <p><code>tns compile</code> turns task/config into <code>program.json</code>, making sections, validators, permissions, and external tools explicit.</p>
+            </div>
+            <div>
+              <strong>Agent-as-coprocessor</strong>
+              <p>The agent doesn't control the loop. AVM assigns one section, the agent returns structured results, the runtime decides the state transition.</p>
+            </div>
+            <div>
+              <strong>Staged validation</strong>
+              <p>preflight, pre_step, post_step, and post_run can each bind validators and command sets, with policy deciding block vs. fix vs. freeze.</p>
+            </div>
+          </div>
+
+          <h2>Architecture</h2>
+          <pre><code>task.md + tns_config.json
+        │
+        ▼
+tns compile ───────────────► .tns/compiled/program.json
+        │
+        ▼
+tns run/start ──► executor ──► verifier ──► policy transition
+        │             │            │
+        ▼             ▼            ▼
+.tns/sections.json · reviews.json · handoff.md · activity.jsonl · locks/</code></pre>
+
+          <p>
+            The CLI layer provides <code>init</code>, <code>compile</code>, <code>simulate</code>, <code>run</code>,
+            <code>start</code>, <code>status</code>, <code>btw</code>, <code>approve</code>, <code>recover</code>, and more.
+            The core layer handles workflow, sections, FSM, agent bridge, state, runtime, policy, permissions, validators,
+            and the command bridge.
+          </p>
+
+          <h2>AVM ISA</h2>
+          <p>
+            The AVM FSM program has four state types: <code>task</code>, <code>decision</code>, <code>loop</code>, and
+            <code>terminal</code>. Each state can declare <code>on_enter</code> instructions and conditional transitions.
+            The ISA is intentionally small so orchestration remains readable, simulatable, and auditable.
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Opcode</th><th>Type</th><th>Semantics</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>set</code></td><td>data</td><td>Write a value to a context dotted path.</td></tr>
+                <tr><td><code>inc</code> / <code>dec</code></td><td>data</td><td>Increment or decrement a numeric register (retry, budget, loop counter).</td></tr>
+                <tr><td><code>append</code></td><td>data</td><td>Append an event or intermediate value to an array path.</td></tr>
+                <tr><td><code>if</code></td><td>control</td><td>Execute then/else instruction blocks based on a condition.</td></tr>
+                <tr><td><code>while</code></td><td>control</td><td>Bounded loop with max_iterations to prevent unbounded expansion.</td></tr>
+                <tr><td><code>emit</code></td><td>side effect</td><td>Write an event to the simulation trace.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h2>State inventory</h2>
+          <p>Key state files are not hidden caches — they are the runtime surface that both operators and tools can read directly.</p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>File</th><th>Purpose</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>.tns/sections.json</code></td><td>Tracked work items and status.</td></tr>
+                <tr><td><code>.tns/activity.jsonl</code></td><td>Append-only event log.</td></tr>
+                <tr><td><code>.tns/reviews.json</code></td><td>Verifier findings and suggested fixes.</td></tr>
+                <tr><td><code>.tns/handoff.md</code></td><td>Handoff text between fresh contexts.</td></tr>
+                <tr><td><code>.tns/runtime.json</code></td><td>Runner heartbeat, active section, agent deadline.</td></tr>
+                <tr><td><code>.tns/approvals.json</code></td><td>Granted and pending permission tags.</td></tr>
+                <tr><td><code>.tns/locks/*.lock</code></td><td>Resource locks for workspace, runner, state, etc.</td></tr>
+                <tr><td><code>.tns/compiled/program.json</code></td><td>Compiled AVM orchestration contract.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h2>Validation and policy</h2>
+          <p>
+            AVM removes "acceptance" from the agent's self-assessment. Validators can check file existence, text regex,
+            JSON paths, and command-set results. Policy then decides whether failure means <code>block_section</code>,
+            <code>mark_needs_fix</code>, <code>freeze</code>, or <code>fail_run</code>. Failure becomes a routable state,
+            not a line in a log.
+          </p>
+
+          <h2>Permissions and locks</h2>
+          <p>
+            Permission profiles match allowed bash commands, workspace-only path audit, and approval tags per section.
+            High-risk steps freeze the workspace until the operator authorizes them with
+            <code>tns approve --tag ...</code>. All mutating flows use named locks under <code>.tns/locks/</code>,
+            with PID and timestamp for stale-lock detection.
+          </p>
+
+          <h2>Recovery model</h2>
+          <p>
+            The runtime continuously writes a heartbeat. If a single Claude follow session exceeds
+            <code>monitor.max_agent_runtime_seconds</code>, the watchdog marks it as retryable.
+            <code>tns recover</code> cleans up stale runtime, locks, and lingering in_progress sections.
+            When all sections are terminal, semantic recovery can release locks directly.
+          </p>
+
+          <h2>Validated case</h2>
+          <p>
+            The audiobook-video template is a real-machine proof of the AVM approach: it splits "English adaptation +
+            manifest," "media generation," and "deterministic edit + QA" into three sections, with validators and approval
+            boundaries for external tools, asset files, ffmpeg output, and video checks. This case demonstrates that TNS
+            isn't just for code tasks — it handles production pipelines with generative assets, CLI tools, and strict
+            acceptance criteria.
+          </p>
+        </div>
+      </article>
+
+      <aside class="article-aside">
+        <div class="aside-box">
+          <p class="aside-title">Report map</p>
+          <a href="#top">Overview</a>
+          <a href="/en/">Product homepage</a>
+          <a href="/en/docs/">CLI docs</a>
+          <a href="/assets/tns-avm-machine.svg" target="_blank" rel="noopener">Open diagram</a>
+          <a href="https://github.com/HuiCir/token-never-sleeps" target="_blank" rel="noopener">Repository</a>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="site-footer">
+      <p><a href="/en/">Back to Token Never Sleeps</a></p>
+    </footer>
+  </div>
+</body>
+</html>
