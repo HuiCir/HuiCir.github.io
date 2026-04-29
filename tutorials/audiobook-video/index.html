@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="TNS Audiobook Video 实机案例：从章节文本到确定性剪辑的完整编排过程。展示 section 拆分、approval tag、command bridge 与 validator 的实际应用。">
+  <meta name="theme-color" content="#f6f3ea">
+  <meta property="og:title" content="Audiobook Video Case Study | TNS Tutorials">
+  <meta property="og:description" content="A real-machine walkthrough of TNS orchestrating a media production pipeline.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://huicir.github.io/tutorials/audiobook-video/">
+  <title>Audiobook Video Case Study | TNS Tutorials</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/site.css">
+  <script src="/assets/site.js" defer></script>
+</head>
+<body>
+  <div class="page-shell page-shell-article">
+    <header class="site-header">
+      <a class="site-mark" href="/">Token Never Sleeps</a>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="/">Product</a>
+        <a href="/avm/">AVM Report</a>
+        <a href="/docs/">Docs</a>
+        <a href="/tutorials/">Tutorials</a>
+        <a href="https://github.com/HuiCir/token-never-sleeps" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+    </header>
+
+    <main class="article-layout">
+      <article class="essay">
+        <header class="essay-header" id="top">
+          <p class="eyebrow">Tutorial · 实机案例</p>
+          <h1>Audiobook Video：从章节文本到确定性剪辑</h1>
+          <p class="essay-dek">
+            这个案例展示 TNS 如何编排一个完整的媒体生产流程：将中文章节文本转化为英文有声短片，
+            包含 manifest 生成、多 voice 语音合成、背景图与 BGM 生成、ffmpeg 确定性剪辑和最终 QA。
+          </p>
+          <div class="essay-meta">
+            <span>3 个 section</span>
+            <span>2 个 approval tag</span>
+            <span>外部工具：ffmpeg, ffprobe</span>
+          </div>
+        </header>
+
+        <div class="essay-body">
+          <h2>案例概览</h2>
+          <p>
+            audiobook-video template 是 TNS archive 中的完整实机案例。它不是"agent 写点文字"式的 demo——
+            它要求源章节、英文脚本、多 voice 资产、16:9 背景图、BGM、ffmpeg 剪辑、字幕烧录和最终视频 QA
+            全部可追踪、可恢复。
+          </p>
+
+          <div class="callout">
+            <p class="callout-title">为什么这个案例重要</p>
+            <p>
+              它证明了 TNS 不只适合纯代码任务。涉及生成式资产、外部命令行工具和严格验收标准的生产流程，
+              同样可以通过 section 拆分、approval boundary 和 validator 获得可治理性。
+            </p>
+          </div>
+
+          <h2>任务结构</h2>
+          <p>整个流程被拆分为 3 个 section，每个 section 有明确的输入、输出和验收标准：</p>
+
+          <div class="case-section">
+            <h3>Section 1：Manifest 生成</h3>
+            <p>
+              输入中文源章节文本。executor agent 将内容改写为英文，并生成
+              <code>src/production_manifest.json</code>。manifest 包含：
+            </p>
+            <ul>
+              <li>英文脚本（每句对应一条字幕）</li>
+              <li>voice 角色分配（哪些句子用哪个 voice profile）</li>
+              <li>场景描述（背景图 prompt 和 BGM 风格提示）</li>
+              <li>时间戳约束（预估每句时长，用于后续剪辑）</li>
+            </ul>
+            <p>manifest 是后续所有步骤的"合约"——它一旦生成，section 2 和 section 3 不再需要回溯源文本。</p>
+            <p>验证脚本：<code>node scripts/check_manifest.mjs</code></p>
+          </div>
+
+          <div class="case-section">
+            <h3>Section 2：媒体资产生成</h3>
+            <p>基于 manifest 中的描述，生成所有媒体素材：</p>
+            <ul>
+              <li>语音文件：调用 TTS 或 voice cloning 为每个角色生成对应句子的 speech clip</li>
+              <li>背景图：根据场景描述生成 16:9 背景图像</li>
+              <li>BGM：根据风格提示生成或选择背景音乐</li>
+            </ul>
+            <p>本 section 需要<strong>外部网络和生成 API</strong>，因此使用了 <code>media-assets</code> approval tag。</p>
+            <p>验证脚本：<code>node scripts/check_manifest.mjs --assets</code></p>
+          </div>
+
+          <div class="case-section">
+            <h3>Section 3：确定性剪辑与 QA</h3>
+            <p>将所有素材组装为最终视频文件：</p>
+            <ul>
+              <li>使用 ffmpeg 将 speech clip 按时间戳拼接</li>
+              <li>叠加背景图，合成多 voice 音轨</li>
+              <li>烧录英文字幕</li>
+              <li>混入 BGM</li>
+              <li>输出 1080p H.264 视频</li>
+            </ul>
+            <p>剪辑脚本：<code>node scripts/build_video.mjs</code></p>
+            <p>验证脚本：<code>node scripts/check_video.mjs</code>，检查：</p>
+            <ul class="case-checklist">
+              <li>分辨率是否为 1920×1080</li>
+              <li>视频流和音频流是否存在</li>
+              <li>时长是否在预期范围内</li>
+              <li>字幕流是否正确编码</li>
+            </ul>
+          </div>
+
+          <h2>权限与 Approval Tag 设计</h2>
+          <p>这是本案例最关键的设计决策之一：不同 section 使用不同的权限 profile。</p>
+
+          <pre><code>{
+  "permissions": {
+    "default_profile": "standard",
+    "profiles": {
+      "standard": {
+        "permission_mode": "acceptEdits",
+        "allowed_bash_commands": ["pwd", "ls", "cat", "sed", "rg", "find", "git", "node"],
+        "workspace_only": true
+      },
+      "media_assets": {
+        "permission_mode": "acceptEdits",
+        "allowed_bash_commands": ["node", "curl", "python3"],
+        "requires_approval": "media-assets",
+        "workspace_only": false
+      },
+      "media_render": {
+        "permission_mode": "acceptEdits",
+        "allowed_bash_commands": ["node", "ffmpeg", "ffprobe"],
+        "requires_approval": "media-render",
+        "workspace_only": true
+      }
+    },
+    "section_profiles": [
+      { "match_title": "Media generation", "profile": "media_assets" },
+      { "match_title": "Deterministic edit and QA", "profile": "media_render" }
+    ]
+  }
+}</code></pre>
+
+          <p>设计理由：</p>
+          <ul>
+            <li><strong>standard profile</strong> — 只允许安全的本地命令（ls、cat、git、node 等），限制在 workspace 内。用于 section 1 的 manifest 生成。</li>
+            <li><strong>media_assets profile</strong> — 允许网络请求和 Python，用于调用外部 TTS/图像生成 API。加上 <code>media-assets</code> approval tag，确保 operator 审核后再放开。</li>
+            <li><strong>media_render profile</strong> — 允许 ffmpeg/ffprobe，但限制在 workspace 内，防止访问系统文件。加上 <code>media-render</code> approval tag，确保 media 准备好后再渲染。</li>
+          </ul>
+
+          <h2>运行流程</h2>
+          <p>operator 在终端中按以下顺序操作：</p>
+
+          <pre><code># 初始化 workspace（使用 audiobook-video template）
+tns init --workspace ./av-case --template audiobook-video
+cd ./av-case
+
+# 编译 task 和 config
+tns compile --config ./tns_config.json
+
+# 诊断检查
+tns doctor --config ./tns_config.json
+
+# 第一轮运行（执行 section 1：manifest）
+tns run --config ./tns_config.json --once
+
+# 进入 section 2 前，需要审批
+tns approve --config ./tns_config.json --tag media-assets --note "assets reviewed"
+tns run --config ./tns_config.json --once
+
+# 进入 section 3 前，再次审批
+tns approve --config ./tns_config.json --tag media-render --note "media verified"
+tns run --config ./tns_config.json --once
+
+# 查看最终状态
+tns status --config ./tns_config.json</code></pre>
+
+          <h2>恢复场景</h2>
+          <p>假设在 section 3 的 ffmpeg 渲染过程中进程崩溃（比如 OOM 或电量耗尽）：</p>
+
+          <pre><code># 重启后，进入 workspace
+cd ./av-case
+
+# 观察当前状态
+tns status --config ./tns_config.json
+# 输出：section 3 状态为 in_progress，runtime 为 stale
+
+# 清理残留状态
+tns recover --config ./tns_config.json
+
+# 重新编译（确保 contract 最新）
+tns compile --config ./tns_config.json
+
+# 继续运行（section 3 从头重试）
+tns run --config ./tns_config.json --once</code></pre>
+
+          <p>
+            因为所有中间产物（manifest、语音文件、图片、BGM）都落在 <code>.tns/</code> 和 workspace 内，
+            section 3 可以安全地从头重试，不需要重新生成 media 资产。
+          </p>
+
+          <h2>关键经验</h2>
+          <div class="report-grid">
+            <div>
+              <strong>Section 边界就是恢复边界</strong>
+              <p>section 1 的 manifest 是 section 2 的输入契约。如果把三个步骤塞进一个 section，崩溃后必须全部重来。</p>
+            </div>
+            <div>
+              <strong>Approval tag 是人工决策点</strong>
+              <p>让 agent 先产出 manifest，operator 审核通过后再放开媒体生成权限。不要一开始就给 agent 全权限。</p>
+            </div>
+            <div>
+              <strong>确定性验证优于自然语言判断</strong>
+              <p><code>check_video.mjs</code> 用 ffprobe 做数值检查（分辨率、时长、流数量），而不是让 verifier"看一下视频"。</p>
+            </div>
+            <div>
+              <strong>文件系统是状态总线</strong>
+              <p>manifest、speech clip、背景图、BGM 都在文件系统上。operator 可以随时用 <code>ls</code> 和 <code>cat</code> 检查中间产物。</p>
+            </div>
+          </div>
+
+          <h2>扩展思路</h2>
+          <p>这个模板可以适配为多种媒体生产流程：</p>
+          <ul>
+            <li><strong>播客生成</strong>：去掉视频轨道，只保留多 voice 音频 + BGM。</li>
+            <li><strong>多语言有声书</strong>：section 1 输出多语言 manifest，section 2 为每种语言生成 speech。</li>
+            <li><strong>slideshow 视频</strong>：将背景图替换为多张幻灯片，按 manifest 时间戳切换。</li>
+            <li><strong>API 驱动的短视频</strong>：section 2 从新闻 API 拉取内容，section 3 自动生成每日摘要视频。</li>
+          </ul>
+          <p>关键在于保持 section 拆分和 approval boundary 的设计思路，而不是改几行脚本。</p>
+        </div>
+      </article>
+
+      <aside class="article-aside">
+        <div class="aside-box">
+          <p class="aside-title">案例导航</p>
+          <a href="#top">案例概览</a>
+          <a href="/tutorials/">返回教程首页</a>
+          <a href="/tutorials/getting-started/">Getting Started</a>
+          <a href="/docs/">CLI 文档</a>
+          <a href="/avm/">AVM 报告</a>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="site-footer">
+      <p><a href="/tutorials/">Back to Tutorials</a></p>
+    </footer>
+  </div>
+</body>
+</html>
