@@ -1,105 +1,184 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
-  <title id="title">Token Never Sleeps AVM architecture</title>
-  <desc id="desc">A deterministic external orchestration runtime that compiles task documents into an AVM program, runs executor and verifier agents, and persists state on disk.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 680" role="img" aria-labelledby="title desc">
+  <title id="title">Token Never Sleeps AVM — external orchestration architecture</title>
+  <desc id="desc">The AVM runtime sits outside the agent, controlling sections, permissions, validation, state persistence, and recovery. The agent is a bounded coprocessor, not the loop controller.</desc>
+
   <defs>
-    <linearGradient id="paper" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0" stop-color="#fffaf1"/>
-      <stop offset="1" stop-color="#efe4d4"/>
+    <linearGradient id="bg" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#fdfaf3"/>
+      <stop offset="1" stop-color="#f2ece0"/>
     </linearGradient>
-    <linearGradient id="ink" x1="0" x2="1" y1="0" y2="1">
+    <linearGradient id="avmGrad" x1="0" x2="1" y1="0" y2="1">
       <stop offset="0" stop-color="#2d2520"/>
       <stop offset="1" stop-color="#171311"/>
     </linearGradient>
-    <linearGradient id="accent" x1="0" x2="1" y1="0" y2="1">
+    <linearGradient id="accentGrad" x1="0" x2="1" y1="0" y2="1">
       <stop offset="0" stop-color="#c45b32"/>
       <stop offset="1" stop-color="#7f2f12"/>
     </linearGradient>
-    <filter id="shadow" x="-12%" y="-12%" width="124%" height="124%">
-      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#3f2711" flood-opacity="0.14"/>
+    <filter id="cardShadow" x="-8%" y="-8%" width="116%" height="116%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#3f2711" flood-opacity="0.10"/>
     </filter>
-    <marker id="arrow" markerWidth="11" markerHeight="11" refX="9" refY="5.5" orient="auto">
-      <path d="M0 0 11 5.5 0 11z" fill="#7f2f12"/>
+    <filter id="avmShadow" x="-6%" y="-6%" width="112%" height="112%">
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#3f2711" flood-opacity="0.18"/>
+    </filter>
+    <marker id="arrowR" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0 0 10 5 0 10z" fill="#7f2f12"/>
+    </marker>
+    <marker id="arrowL" markerWidth="10" markerHeight="10" refX="2" refY="5" orient="auto">
+      <path d="M10 0 0 5 10 10z" fill="#7f2f12"/>
     </marker>
   </defs>
 
-  <rect width="1200" height="720" rx="34" fill="url(#paper)"/>
-  <path d="M0 120C176 66 306 77 453 132c174 65 292 62 446 0 124-50 215-65 301-37v625H0z" fill="#f7efe2" opacity=".72"/>
-  <path d="M88 116h1024v488H88z" rx="30" fill="rgba(255,255,255,.58)" stroke="#2b211a" stroke-opacity=".12"/>
+  <!-- Background -->
+  <rect width="1200" height="680" rx="28" fill="url(#bg)"/>
 
-  <g filter="url(#shadow)">
-    <rect x="452" y="118" width="296" height="456" rx="28" fill="url(#ink)"/>
-    <rect x="474" y="146" width="252" height="400" rx="20" fill="#211b18" stroke="#fff3e6" stroke-opacity=".12"/>
-    <text x="600" y="185" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="16" font-weight="800" fill="#f9efe4" letter-spacing="3">TNS AVM</text>
-    <text x="600" y="217" text-anchor="middle" font-family="Newsreader, Georgia, serif" font-size="28" font-weight="700" fill="#fff9f1">external orchestration</text>
-
-    <rect x="506" y="252" width="188" height="56" rx="12" fill="#342a25" stroke="#a98970" stroke-opacity=".38"/>
-    <text x="600" y="276" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="13" font-weight="700" fill="#fff6ec">program counter</text>
-    <text x="600" y="296" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="12" fill="#cbb7a5">init → run → verify → done</text>
-
-    <rect x="506" y="326" width="188" height="56" rx="12" fill="#342a25" stroke="#a98970" stroke-opacity=".38"/>
-    <text x="600" y="350" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="13" font-weight="700" fill="#fff6ec">permission MMU</text>
-    <text x="600" y="370" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="12" fill="#cbb7a5">profiles · approvals · locks</text>
-
-    <rect x="506" y="400" width="188" height="56" rx="12" fill="#342a25" stroke="#a98970" stroke-opacity=".38"/>
-    <text x="600" y="424" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="13" font-weight="700" fill="#fff6ec">watchdog timer</text>
-    <text x="600" y="444" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="12" fill="#cbb7a5">heartbeat · deadline · recover</text>
-
-    <rect x="506" y="474" width="188" height="44" rx="12" fill="url(#accent)"/>
-    <text x="600" y="502" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="13" font-weight="800" fill="#fff8ef">deterministic state transition</text>
+  <!-- ====== TOP: Source → Compile ====== -->
+  <g filter="url(#cardShadow)">
+    <rect x="44" y="40" width="240" height="100" rx="16" fill="#fffaf2" stroke="#2b211a" stroke-opacity=".10"/>
+    <text x="164" y="72" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="13" font-weight="800" fill="#7f2f12" letter-spacing="2">SOURCE</text>
+    <text x="164" y="98" text-anchor="middle" font-family="Newsreader, Georgia, serif" font-size="22" font-weight="700" fill="#181412">task.md</text>
+    <text x="164" y="122" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="12" fill="#6b625a">human sections · acceptance criteria</text>
   </g>
 
-  <g font-family="Manrope, Arial, sans-serif">
-    <rect x="130" y="148" width="224" height="120" rx="18" fill="#fffaf2" stroke="#2b211a" stroke-opacity=".14"/>
-    <text x="158" y="181" font-size="14" font-weight="800" fill="#7f2f12">source contract</text>
-    <text x="158" y="213" font-size="22" font-weight="800" fill="#181412">task.md</text>
-    <text x="158" y="242" font-size="13" fill="#6b625a">human sections, acceptance</text>
-
-    <rect x="130" y="302" width="224" height="120" rx="18" fill="#fffaf2" stroke="#2b211a" stroke-opacity=".14"/>
-    <text x="158" y="335" font-size="14" font-weight="800" fill="#7f2f12">compiler output</text>
-    <text x="158" y="367" font-size="22" font-weight="800" fill="#181412">program.json</text>
-    <text x="158" y="396" font-size="13" fill="#6b625a">FSM, validators, externals</text>
-
-    <rect x="130" y="456" width="224" height="120" rx="18" fill="#fffaf2" stroke="#2b211a" stroke-opacity=".14"/>
-    <text x="158" y="489" font-size="14" font-weight="800" fill="#7f2f12">state bus</text>
-    <text x="158" y="521" font-size="22" font-weight="800" fill="#181412">.tns/</text>
-    <text x="158" y="550" font-size="13" fill="#6b625a">JSON, JSONL, handoff, locks</text>
-
-    <rect x="846" y="148" width="224" height="120" rx="18" fill="#fffaf2" stroke="#2b211a" stroke-opacity=".14"/>
-    <text x="874" y="181" font-size="14" font-weight="800" fill="#7f2f12">coprocessor</text>
-    <text x="874" y="213" font-size="22" font-weight="800" fill="#181412">executor</text>
-    <text x="874" y="242" font-size="13" fill="#6b625a">one bounded section step</text>
-
-    <rect x="846" y="302" width="224" height="120" rx="18" fill="#fffaf2" stroke="#2b211a" stroke-opacity=".14"/>
-    <text x="874" y="335" font-size="14" font-weight="800" fill="#7f2f12">independent gate</text>
-    <text x="874" y="367" font-size="22" font-weight="800" fill="#181412">verifier</text>
-    <text x="874" y="396" font-size="13" fill="#6b625a">reviews, fixes, terminal state</text>
-
-    <rect x="846" y="456" width="224" height="120" rx="18" fill="#fffaf2" stroke="#2b211a" stroke-opacity=".14"/>
-    <text x="874" y="489" font-size="14" font-weight="800" fill="#7f2f12">operator surface</text>
-    <text x="874" y="521" font-size="22" font-weight="800" fill="#181412">CLI + tmux</text>
-    <text x="874" y="550" font-size="13" fill="#6b625a">status, btw, approve, recover</text>
+  <g filter="url(#cardShadow)">
+    <rect x="44" y="164" width="240" height="100" rx="16" fill="#fffaf2" stroke="#2b211a" stroke-opacity=".10"/>
+    <text x="164" y="196" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="13" font-weight="800" fill="#7f2f12" letter-spacing="2">CONFIG</text>
+    <text x="164" y="222" text-anchor="middle" font-family="Newsreader, Georgia, serif" font-size="22" font-weight="700" fill="#181412">tns_config.json</text>
+    <text x="164" y="246" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="12" fill="#6b625a">permissions · validators · hooks</text>
   </g>
 
-  <g fill="none" stroke="#7f2f12" stroke-width="3" stroke-linecap="round" marker-end="url(#arrow)">
-    <path d="M354 208C386 208 405 218 428 238"/>
-    <path d="M354 362C391 356 414 348 444 332"/>
-    <path d="M452 516C408 520 390 520 354 516"/>
-    <path d="M748 208C779 202 806 200 846 208"/>
-    <path d="M846 362C807 362 779 356 748 342"/>
-    <path d="M748 498C786 510 812 516 846 516"/>
+  <!-- Arrow: source → compile -->
+  <line x1="284" y1="130" x2="354" y2="164" stroke="#7f2f12" stroke-width="2.5" stroke-linecap="round" marker-end="url(#arrowR)"/>
+
+  <!-- Compile box -->
+  <g filter="url(#cardShadow)">
+    <rect x="362" y="102" width="180" height="118" rx="16" fill="#fffaf2" stroke="#b44f2a" stroke-opacity=".22"/>
+    <text x="452" y="140" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="13" font-weight="800" fill="#7f2f12" letter-spacing="2">COMPILE</text>
+    <text x="452" y="168" text-anchor="middle" font-family="Newsreader, Georgia, serif" font-size="20" font-weight="700" fill="#181412">program.json</text>
+    <text x="452" y="196" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="12" fill="#6b625a">FSM · externals · contract</text>
   </g>
 
-  <g font-family="Manrope, Arial, sans-serif" font-size="12" font-weight="800" fill="#7f2f12">
-    <text x="381" y="210">compile</text>
-    <text x="378" y="344">load</text>
-    <text x="372" y="548">persist</text>
-    <text x="778" y="192">invoke</text>
-    <text x="782" y="350">review</text>
-    <text x="782" y="548">operate</text>
+  <!-- Arrow: compile → AVM -->
+  <path d="M542 162 C582 162, 590 162, 618 162" fill="none" stroke="#7f2f12" stroke-width="2.5" stroke-linecap="round" marker-end="url(#arrowR)"/>
+
+  <!-- ====== CENTER: AVM ====== -->
+  <g filter="url(#avmShadow)">
+    <rect x="628" y="44" width="310" height="392" rx="22" fill="url(#avmGrad)"/>
+    <rect x="650" y="68" width="266" height="344" rx="16" fill="#211b18" stroke="#fff3e6" stroke-opacity=".08"/>
+
+    <text x="783" y="104" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="14" font-weight="800" fill="#f9efe4" letter-spacing="4">TNS AVM</text>
+    <text x="783" y="132" text-anchor="middle" font-family="Newsreader, Georgia, serif" font-size="24" font-weight="700" fill="#fff9f1">external orchestration</text>
+
+    <!-- Program Counter -->
+    <rect x="670" y="156" width="226" height="50" rx="10" fill="#342a25" stroke="#a98970" stroke-opacity=".28"/>
+    <text x="783" y="178" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="12" font-weight="700" fill="#fff6ec">Program Counter</text>
+    <text x="783" y="196" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="11" fill="#cbb7a5">select → invoke → verify → transition</text>
+
+    <!-- Permission MMU -->
+    <rect x="670" y="218" width="226" height="50" rx="10" fill="#342a25" stroke="#a98970" stroke-opacity=".28"/>
+    <text x="783" y="240" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="12" font-weight="700" fill="#fff6ec">Permission MMU</text>
+    <text x="783" y="258" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="11" fill="#cbb7a5">profiles · approvals · workspace audit</text>
+
+    <!-- Watchdog -->
+    <rect x="670" y="280" width="226" height="50" rx="10" fill="#342a25" stroke="#a98970" stroke-opacity=".28"/>
+    <text x="783" y="302" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="12" font-weight="700" fill="#fff6ec">Watchdog</text>
+    <text x="783" y="320" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="11" fill="#cbb7a5">heartbeat · deadline · retry</text>
+
+    <!-- State Transition (accent) -->
+    <rect x="670" y="342" width="226" height="42" rx="10" fill="url(#accentGrad)"/>
+    <text x="783" y="368" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="12" font-weight="800" fill="#fff8ef">deterministic state transition</text>
   </g>
 
-  <g transform="translate(192 640)">
-    <rect width="816" height="36" rx="18" fill="#181412" opacity=".9"/>
-    <text x="408" y="23" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="13" font-weight="800" fill="#fff8ef">long-horizon work survives fresh context, usage limits, failures, and handoffs because the runtime is outside the agent</text>
+  <!-- ====== RIGHT: Agent side ====== -->
+  <g filter="url(#cardShadow)">
+    <rect x="974" y="58" width="200" height="96" rx="14" fill="#fffaf2" stroke="#2b211a" stroke-opacity=".10"/>
+    <text x="1074" y="90" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="12" font-weight="800" fill="#7f2f12" letter-spacing="2">COPROCESSOR</text>
+    <text x="1074" y="116" text-anchor="middle" font-family="Newsreader, Georgia, serif" font-size="20" font-weight="700" fill="#181412">executor</text>
+    <text x="1074" y="140" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="11" fill="#6b625a">one bounded section step</text>
   </g>
+
+  <g filter="url(#cardShadow)">
+    <rect x="974" y="178" width="200" height="96" rx="14" fill="#fffaf2" stroke="#2b211a" stroke-opacity=".10"/>
+    <text x="1074" y="210" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="12" font-weight="800" fill="#7f2f12" letter-spacing="2">VALIDATOR</text>
+    <text x="1074" y="236" text-anchor="middle" font-family="Newsreader, Georgia, serif" font-size="20" font-weight="700" fill="#181412">verifier</text>
+    <text x="1074" y="260" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="11" fill="#6b625a">reviews · fixes · terminal</text>
+  </g>
+
+  <!-- AVM → executor (invoke) -->
+  <path d="M896 106 C926 100, 944 100, 974 106" fill="none" stroke="#7f2f12" stroke-width="2.2" stroke-linecap="round" marker-end="url(#arrowR)"/>
+  <text x="935" y="95" font-family="Manrope, Arial, sans-serif" font-size="11" font-weight="700" fill="#7f2f12">invoke</text>
+
+  <!-- executor → verifier -->
+  <line x1="1074" y1="154" x2="1074" y2="178" stroke="#7f2f12" stroke-width="2" stroke-linecap="round" marker-end="url(#arrowR)"/>
+
+  <!-- verifier → AVM (review) -->
+  <path d="M974 226 C944 232, 926 232, 896 226" fill="none" stroke="#7f2f12" stroke-width="2.2" stroke-linecap="round" marker-end="url(#arrowL)"/>
+  <text x="930" y="244" font-family="Manrope, Arial, sans-serif" font-size="11" font-weight="700" fill="#7f2f12">review</text>
+
+  <!-- ====== BOTTOM: State bus ====== -->
+  <g filter="url(#cardShadow)">
+    <rect x="44" y="340" width="560" height="144" rx="16" fill="#fffaf2" stroke="#2b211a" stroke-opacity=".10"/>
+    <text x="324" y="374" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="13" font-weight="800" fill="#7f2f12" letter-spacing="2">STATE BUS  .tns/</text>
+
+    <rect x="68" y="394" width="118" height="38" rx="8" fill="#f8f2e7" stroke="#2b211a" stroke-opacity=".06"/>
+    <text x="127" y="418" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="11" font-weight="600" fill="#181412">sections.json</text>
+
+    <rect x="198" y="394" width="118" height="38" rx="8" fill="#f8f2e7" stroke="#2b211a" stroke-opacity=".06"/>
+    <text x="257" y="418" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="11" font-weight="600" fill="#181412">reviews.json</text>
+
+    <rect x="328" y="394" width="118" height="38" rx="8" fill="#f8f2e7" stroke="#2b211a" stroke-opacity=".06"/>
+    <text x="387" y="418" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="11" font-weight="600" fill="#181412">handoff.md</text>
+
+    <rect x="458" y="394" width="118" height="38" rx="8" fill="#f8f2e7" stroke="#2b211a" stroke-opacity=".06"/>
+    <text x="517" y="418" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="11" font-weight="600" fill="#181412">activity.jsonl</text>
+
+    <rect x="68" y="440" width="118" height="32" rx="8" fill="#f8f2e7" stroke="#2b211a" stroke-opacity=".06"/>
+    <text x="127" y="461" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="11" font-weight="600" fill="#181412">runtime.json</text>
+
+    <rect x="198" y="440" width="118" height="32" rx="8" fill="#f8f2e7" stroke="#2b211a" stroke-opacity=".06"/>
+    <text x="257" y="461" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="11" font-weight="600" fill="#181412">approvals.json</text>
+
+    <rect x="328" y="440" width="118" height="32" rx="8" fill="#f8f2e7" stroke="#2b211a" stroke-opacity=".06"/>
+    <text x="387" y="461" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="11" font-weight="600" fill="#181412">locks/</text>
+
+    <rect x="458" y="440" width="118" height="32" rx="8" fill="url(#accentGrad)" opacity=".12"/>
+    <text x="517" y="461" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="11" font-weight="600" fill="#7f2f12">program.json</text>
+  </g>
+
+  <!-- AVM ↔ State bus arrows -->
+  <path d="M783 436 C783 420, 660 420, 604 412" fill="none" stroke="#7f2f12" stroke-width="2.2" stroke-linecap="round" marker-end="url(#arrowL)"/>
+  <text x="690" y="414" font-family="Manrope, Arial, sans-serif" font-size="11" font-weight="700" fill="#7f2f12">persist</text>
+
+  <path d="M604 460 C660 468, 722 468, 783 448" fill="none" stroke="#7f2f12" stroke-width="2.2" stroke-linecap="round" marker-end="url(#arrowR)"/>
+  <text x="690" y="480" font-family="Manrope, Arial, sans-serif" font-size="11" font-weight="700" fill="#7f2f12">load</text>
+
+  <!-- ====== BOTTOM-RIGHT: Operator surface ====== -->
+  <g filter="url(#cardShadow)">
+    <rect x="974" y="340" width="200" height="144" rx="14" fill="#fffaf2" stroke="#2b211a" stroke-opacity=".10"/>
+    <text x="1074" y="374" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="12" font-weight="800" fill="#7f2f12" letter-spacing="2">OPERATOR</text>
+
+    <rect x="994" y="394" width="160" height="30" rx="6" fill="#f8f2e7" stroke="#2b211a" stroke-opacity=".06"/>
+    <text x="1074" y="414" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="12" font-weight="600" fill="#181412">status · btw · trace</text>
+
+    <rect x="994" y="432" width="160" height="30" rx="6" fill="#f8f2e7" stroke="#2b211a" stroke-opacity=".06"/>
+    <text x="1074" y="452" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="12" font-weight="600" fill="#181412">approve · revoke</text>
+
+    <text x="1074" y="476" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="11" fill="#6b625a">CLI + tmux</text>
+  </g>
+
+  <!-- AVM → operator -->
+  <path d="M938 280 C968 310, 988 350, 1008 380" fill="none" stroke="#7f2f12" stroke-width="2" stroke-linecap="round" marker-end="url(#arrowR)"/>
+
+  <!-- ====== Dividing line: agent vs outside ====== -->
+  <line x1="956" y1="36" x2="956" y2="504" stroke="#b44f2a" stroke-width="1.5" stroke-dasharray="8 4" stroke-opacity=".35"/>
+  <text x="948" y="526" text-anchor="end" font-family="Manrope, Arial, sans-serif" font-size="10" font-weight="700" fill="#b44f2a" opacity=".55">agent boundary</text>
+
+  <!-- ====== Bottom banner ====== -->
+  <g transform="translate(192 556)">
+    <rect width="816" height="36" rx="18" fill="#181412" opacity=".88"/>
+    <text x="408" y="23" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="13" font-weight="800" fill="#fff8ef">the runtime is outside the agent — long-horizon work survives context loss, failures, and handoffs</text>
+  </g>
+
+  <!-- ====== Left label ====== -->
+  <text x="164" y="520" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="10" font-weight="700" fill="#6b625a" opacity=".55">human authors</text>
 </svg>
