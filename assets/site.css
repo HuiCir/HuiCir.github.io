@@ -136,14 +136,15 @@ p, li {
 }
 
 .hero h1 {
-  font-size: clamp(1.7rem, 3.1vw, 2.8rem);
-  max-width: 12ch;
-  line-height: 1.08;
+  font-size: clamp(1.55rem, 2.6vw, 2.2rem);
+  max-width: 14ch;
+  line-height: 1.1;
 }
 
 .product-hero {
-  grid-template-columns: minmax(0, 0.95fr) minmax(420px, 1.05fr);
-  align-items: center;
+  grid-template-columns: 1fr;
+  gap: 32px;
+  align-items: start;
 }
 
 .product-hero .hero-copy {
@@ -153,8 +154,8 @@ p, li {
 }
 
 .product-hero h1 {
-  max-width: 13ch;
-  font-size: clamp(2.35rem, 5vw, 5.3rem);
+  max-width: 14ch;
+  font-size: clamp(1.85rem, 3.4vw, 3.2rem);
 }
 
 .hero-diagram {
@@ -325,7 +326,7 @@ p, li {
 .feature-card h3 {
   margin: 8px 0 10px;
   font-family: "Newsreader", serif;
-  font-size: 1.55rem;
+  font-size: 1.35rem;
   letter-spacing: 0;
   line-height: 1.12;
 }
@@ -358,7 +359,7 @@ p, li {
   display: block;
   margin: 10px 0 8px;
   font-family: "Newsreader", serif;
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   letter-spacing: 0;
 }
 
@@ -420,7 +421,7 @@ p, li {
 
 .section-heading h2,
 .section-heading h1 {
-  font-size: clamp(1.8rem, 3.2vw, 2.8rem);
+  font-size: clamp(1.55rem, 2.4vw, 2.1rem);
 }
 
 .post-card {
@@ -506,8 +507,8 @@ p, li {
 }
 
 .essay-header h1 {
-  font-size: clamp(2.2rem, 4.1vw, 3.7rem);
-  max-width: 13ch;
+  font-size: clamp(1.75rem, 2.8vw, 2.5rem);
+  max-width: 16ch;
 }
 
 .essay-meta {
@@ -555,13 +556,13 @@ p, li {
 }
 
 .essay-body h2 {
-  font-size: 2.1rem;
-  margin-top: 44px;
+  font-size: 1.6rem;
+  margin-top: 40px;
 }
 
 .essay-body h3 {
-  font-size: 1.45rem;
-  margin-top: 30px;
+  font-size: 1.25rem;
+  margin-top: 28px;
 }
 
 .essay-body strong {
