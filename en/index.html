@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Token Never Sleeps is an external orchestration runtime for long-horizon agent work. It compiles tasks into recoverable, verifiable, auditable execution systems.">
+  <meta name="theme-color" content="#f6f3ea">
+  <meta property="og:title" content="Token Never Sleeps">
+  <meta property="og:description" content="Agent external orchestration for long-horizon work.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://huicir.github.io/en/">
+  <title>Token Never Sleeps</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/site.css">
+  <script src="/assets/site.js" defer></script>
+</head>
+<body>
+  <div class="page-shell">
+    <header class="site-header">
+      <a class="site-mark" href="/en/">Token Never Sleeps</a>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="/en/avm/">AVM Report</a>
+        <a href="/en/docs/">Docs</a>
+        <a href="/en/tutorials/">Tutorials</a>
+        <a href="https://www.npmjs.com/package/token-never-sleeps" target="_blank" rel="noopener">npm</a>
+        <a href="https://github.com/HuiCir/token-never-sleeps" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero product-hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Agent external orchestration · npm v1.0.2</p>
+          <h1>Let agents survive long tasks without relying on memory.</h1>
+          <p class="hero-summary">
+            Token Never Sleeps compiles your <code>task.md</code> into an executable AVM contract, then an external runtime
+            schedules the executor, verifier, permissions, watchdog, state files, and recovery paths.
+            The model handles one bounded step; the real long-horizon control stays outside the agent.
+          </p>
+          <div class="install-strip" aria-label="Install command">
+            <code>npm install -g token-never-sleeps</code>
+          </div>
+          <div class="hero-metrics" aria-label="TNS summary">
+            <div>
+              <span>Runtime</span>
+              <strong>external loop, not one giant prompt</strong>
+            </div>
+            <div>
+              <span>State</span>
+              <strong>plain files under .tns/</strong>
+            </div>
+            <div>
+              <span>Work style</span>
+              <strong>long-horizon, recoverable, auditable</strong>
+            </div>
+          </div>
+          <div class="hero-actions">
+            <a class="button button-primary" href="/en/docs/">Quick start</a>
+            <a class="button button-secondary" href="/en/avm/">Read AVM report</a>
+          </div>
+        </div>
+        <figure class="hero-diagram">
+          <img src="/assets/tns-avm-machine.svg" alt="Token Never Sleeps AVM external orchestration architecture.">
+        </figure>
+      </section>
+
+      <section class="section-block split-grid">
+        <div>
+          <div class="section-heading">
+            <p class="eyebrow">Design philosophy</p>
+            <h2>Long-horizon agents need explicit machine contracts, not longer prompts.</h2>
+          </div>
+          <div class="mini-list">
+            <div class="mini-item">
+              <span>Agent-as-coprocessor</span>
+              <span>Claude processes one section, AVM decides the next transition</span>
+            </div>
+            <div class="mini-item">
+              <span>File-system state bus</span>
+              <span>All state lives in <code>.tns/</code> — traceable even after a crash</span>
+            </div>
+            <div class="mini-item">
+              <span>Defense in depth</span>
+              <span>preflight, pre_step, post_step, post_run layered validation</span>
+            </div>
+            <div class="mini-item">
+              <span>Crash-safe locks</span>
+              <span>runner, workspace, state coordinated through named locks</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="note-panel">
+          <p class="eyebrow">Core thesis</p>
+          <p>
+            TNS doesn't replace the agent — it places the agent inside a governable execution environment.
+            Task boundaries, permissions, validation, recovery, audit, and handoff after usage limits
+            no longer depend on a single conversation window staying alive.
+          </p>
+        </div>
+      </section>
+
+      <section class="section-block">
+        <div class="section-heading">
+          <p class="eyebrow">Use cases</p>
+          <h2>For work that spans rounds, survives failure, and requires acceptance.</h2>
+        </div>
+        <div class="feature-grid">
+          <article class="feature-card">
+            <p class="post-kicker">Software work</p>
+            <h3>Repository-level changes with verification</h3>
+            <p>Slice requirements into sections: executor writes code, verifier runs checks and produces reviews. <code>trace</code> and <code>btw</code> let the operator read state at any time.</p>
+          </article>
+          <article class="feature-card">
+            <p class="post-kicker">Creative production</p>
+            <h3>Long-form writing & chapter production</h3>
+            <p>The novel-writing template uses a story bible, chapter summaries, and validator constraints to maintain continuity across sessions — no context drift.</p>
+          </article>
+          <article class="feature-card">
+            <p class="post-kicker">Media pipeline</p>
+            <h3>Real-machine workflows with external tools</h3>
+            <p>The audiobook-video case splits English adaptation, asset generation, and deterministic ffmpeg editing into three sections, with approval tags guarding high-privilege steps.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section-block product-band">
+        <div class="section-heading">
+          <p class="eyebrow">How AVM works</p>
+          <h2>From natural-language tasks to simulatable finite-state programs.</h2>
+        </div>
+        <div class="pipeline">
+          <div>
+            <span>01</span>
+            <strong>Source</strong>
+            <p><code>task.md</code> describes goals, sections, and acceptance criteria; <code>tns_config.json</code> describes workspace, permissions, validators, and hooks.</p>
+          </div>
+          <div>
+            <span>02</span>
+            <strong>Compile</strong>
+            <p><code>tns compile</code> produces <code>.tns/compiled/program.json</code>, turning implicit workflow into an explicit FSM with external dependencies.</p>
+          </div>
+          <div>
+            <span>03</span>
+            <strong>Run</strong>
+            <p>The runtime picks the current section, invokes the executor, hands off to the verifier, and runs validators and policy at every stage.</p>
+          </div>
+          <div>
+            <span>04</span>
+            <strong>Recover</strong>
+            <p>Activity, reviews, handoff, locks, and heartbeat are all persisted. After interruption, <code>tns recover</code> or simply continue.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-block split-grid">
+        <div>
+          <div class="section-heading">
+            <p class="eyebrow">Quick start</p>
+            <h2>Install the npm CLI and initialize a runnable workspace.</h2>
+          </div>
+          <pre class="code-panel"><code>npm install -g token-never-sleeps
+
+tns init --workspace ./my-task
+cd ./my-task
+tns compile --config ./tns_config.json
+tns doctor --config ./tns_config.json
+tns run --config ./tns_config.json --once
+tns status --config ./tns_config.json</code></pre>
+        </div>
+        <div class="note-panel">
+          <p class="eyebrow">Operational mode</p>
+          <p>
+            Short tasks use <code>run --once</code> for manual stepping; long tasks use <code>tns start</code>,
+            which enters managed runner mode when tmux is configured, or direct mode otherwise.
+            Use <code>tns btw</code> for read-only observation during long runs — it won't contend for the workspace lock.
+          </p>
+          <p><a class="text-link" href="/en/docs/">View full CLI reference</a></p>
+        </div>
+      </section>
+
+      <section class="section-block">
+        <div class="section-heading">
+          <p class="eyebrow">Real machine case</p>
+          <h2>Audiobook-video template: from chapter text to deterministic editing.</h2>
+        </div>
+        <article class="case-card">
+          <div class="case-card-main">
+            <p>
+              The audiobook-video template converts a source chapter into an English audiobook short:
+              generate <code>src/production_manifest.json</code>, produce images, BGM, and multi-voice speech,
+              then run <code>node scripts/build_video.mjs</code> for deterministic ffmpeg assembly and
+              <code>node scripts/check_video.mjs</code> to validate resolution, streams, duration, and subtitles.
+              <a class="text-link" href="/en/tutorials/audiobook-video/">Full walkthrough →</a>
+            </p>
+          </div>
+          <div class="case-card-side">
+            <strong>3 sections</strong>
+            <span>manifest · media generation · deterministic edit/QA</span>
+            <strong>2 approval tags</strong>
+            <span>media-assets · media-render</span>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>Token Never Sleeps. External orchestration for long-horizon agent work.</p>
+    </footer>
+  </div>
+</body>
+</html>
