@@ -1,0 +1,20 @@
+{
+  "perseus-runtime.png": {
+    "title": "PERSEUS: Non-Blocking Parallel Exploration with a Speculative Swarm",
+    "status": "Under review",
+    "figure": "Figure 1, runtime panel",
+    "source": "Author-supplied manuscript",
+    "page": 2,
+    "cropPdfPoints": [108, 220, 504, 376],
+    "fullManuscriptIncluded": false
+  },
+  "hpd-overview.png": {
+    "title": "Harness Policy Distillation: Aligning Agent Policies with Runtime Semantics",
+    "status": "Under review",
+    "figure": "Figure 1",
+    "source": "Author-supplied manuscript",
+    "page": 2,
+    "cropPdfPoints": [106, 80, 506, 211],
+    "fullManuscriptIncluded": false
+  }
+}

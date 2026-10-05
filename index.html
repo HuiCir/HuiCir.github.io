@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Junze Zhu | Nanjing University</title>
+  <meta name="description" content="Junze Zhu, Ph.D. candidate at Nanjing University. Research on language agents, multi-agent orchestration, harness policy distillation and graph-based recommendation.">
+  <meta name="theme-color" content="#faf9f6">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Junze Zhu | Research">
+  <meta property="og:description" content="Language agents, from coordination to execution. Selected publications and ongoing research.">
+  <meta property="og:url" content="https://huicir.github.io/">
+  <link rel="canonical" href="https://huicir.github.io/">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script src="content.js" defer></script>
+  <script src="app.js" defer></script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"Person","name":"Junze Zhu","url":"https://huicir.github.io/","jobTitle":"Ph.D. candidate","affiliation":{"@type":"CollegeOrUniversity","name":"Nanjing University"},"sameAs":["https://scholar.google.com/citations?user=-XbdENoAAAAJ&hl=en","https://github.com/HuiCir"]}</script>
+</head>
+<body>
+  <a class="skip-link" href="#main" data-i18n="skip">Skip to content</a>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="#main" aria-label="Junze Zhu home">JZ<span class="brand-dot">.</span></a>
+      <nav aria-label="Main navigation">
+        <a href="#research" data-i18n="navResearch">Research</a>
+        <a href="#publications" data-i18n="navPapers">Publications</a>
+        <a href="#about" data-i18n="navAbout">About</a>
+      </nav>
+      <button class="language-toggle" type="button" aria-label="Switch to Chinese" hidden>中文</button>
+    </div>
+  </header>
+
+  <div class="page-shell">
+    <aside class="profile-sidebar" aria-label="Researcher profile">
+      <div class="portrait-frame" aria-hidden="true"><div class="monogram">JZ</div></div>
+      <h2 class="profile-name">Junze Zhu</h2>
+      <p class="profile-role" data-i18n="role">Ph.D. candidate</p>
+      <p class="profile-affiliation" data-i18n="affiliation">Nanjing University</p>
+      <div class="profile-rule"></div>
+      <p class="sidebar-note" data-i18n="profileNote">Language agents<br>Multi-agent systems<br>Graph learning</p>
+      <div class="profile-links">
+        <a href="https://scholar.google.com/citations?user=-XbdENoAAAAJ&amp;hl=en" target="_blank" rel="noopener noreferrer">Google Scholar <span aria-hidden="true">↗</span></a>
+        <a href="https://github.com/HuiCir" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+      </div>
+      <p class="sidebar-location" data-i18n="location">Nanjing, China</p>
+    </aside>
+
+    <main id="main">
+      <section class="hero" aria-labelledby="intro-title">
+        <p class="eyebrow" data-i18n="eyebrow">Research in language agents &amp; learning</p>
+        <h1 id="intro-title" data-i18n="heroTitle">Language agents,<br>from coordination<br>to execution.</h1>
+        <p class="lead" data-i18n="heroLead">I study how agents coordinate, acquire evidence, and act within real execution environments. My work connects multi-agent dynamics, speculative exploration, and harness-aligned learning.</p>
+        <div class="research-tags" aria-label="Research topics">
+          <span data-i18n="tagAgents">Agent systems</span><span data-i18n="tagRuntime">Runtime semantics</span><span data-i18n="tagGraphs">Learning on graphs</span>
+        </div>
+      </section>
+
+      <section id="research" aria-labelledby="research-title">
+        <div class="section-heading"><h2 id="research-title" data-i18n="researchTitle">Current research</h2><span class="section-note">2026</span></div>
+        <div class="research-grid">
+          <article class="research-card">
+            <a class="research-figure" href="assets/perseus-runtime.png" target="_blank" rel="noopener" aria-label="View Perseus runtime diagram at full size">
+              <img src="assets/perseus-runtime.png" alt="One authoritative Actor with isolated speculative branches, persistent Futures and ready-only evidence admission" width="1584" height="624" loading="lazy">
+            </a>
+            <div class="research-card-body">
+              <span class="status-badge" data-i18n="underReview">Under review</span>
+              <h3 class="research-title">Perseus</h3>
+              <p class="paper-subtitle">Non-Blocking Parallel Exploration with a Speculative Swarm</p>
+              <p class="research-summary" data-i18n="perseusSummary">Broadening discovery while one Actor retains task authority. Independent speculative acquisitions, persistent Futures, and ready-only evidence let exploration continue alongside the main trajectory.</p>
+              <p class="research-meta" data-i18n="perseusMeta">Inference-time exploration · Asynchronous execution</p>
+              <div class="research-links"><a href="assets/perseus-runtime.png" target="_blank" rel="noopener" data-i18n="viewDiagram">View diagram ↗</a></div>
+            </div>
+          </article>
+          <article class="research-card">
+            <a class="research-figure" href="assets/hpd-overview.png" target="_blank" rel="noopener" aria-label="View HPD overview diagram at full size">
+              <img src="assets/hpd-overview.png" alt="Harness Policy Distillation combines verified actions and runtime control-document views into one agent policy" width="1600" height="524" loading="lazy">
+            </a>
+            <div class="research-card-body">
+              <span class="status-badge" data-i18n="underReview">Under review</span>
+              <h3 class="research-title">HPD</h3>
+              <p class="paper-subtitle">Harness Policy Distillation: Aligning Agent Policies with Runtime Semantics</p>
+              <p class="research-summary" data-i18n="hpdSummary">Learning policies that respect the harness they run in. Verified action targets and runtime control-document views provide complementary supervision for a single model, preserving the native deployment interface.</p>
+              <p class="research-meta" data-i18n="hpdMeta">Policy distillation · Harness-compatible agents</p>
+              <div class="research-links"><a href="assets/hpd-overview.png" target="_blank" rel="noopener" data-i18n="viewDiagram">View diagram ↗</a></div>
+            </div>
+          </article>
+        </div>
+        <p class="section-footnote" data-i18n="reviewNote">Ongoing manuscripts are shown as research summaries. Under-review work is listed separately from published papers.</p>
+      </section>
+
+      <section id="publications" aria-labelledby="publications-title">
+        <div class="section-heading"><h2 id="publications-title" data-i18n="publicationsTitle">Selected publications</h2><span class="section-note" data-i18n="peerReviewed">Peer-reviewed</span></div>
+        <div class="publication-list">
+          <article class="publication">
+            <div class="publication-year">2026</div>
+            <div class="publication-content">
+              <h3><a href="https://proceedings.mlr.press/v306/zhu26g.html" target="_blank" rel="noopener noreferrer">Recognize Your Orchestrator: An Entropy Dynamics Perspective for LLM Multi-Agent Systems</a></h3>
+              <p class="authors"><strong>Junze Zhu</strong>, Weihao Chen, Xuanwang Zhang, Zhen Wu, Xinyu Dai</p>
+              <p class="venue"><strong>ICML 2026</strong> <span>· PMLR 306</span></p>
+              <p class="publication-summary" data-i18n="orchestratorSummary">A mean-field entropy model connects task resolution and context loading, explaining instability in centralized language-agent orchestration.</p>
+              <div class="publication-links"><a href="https://proceedings.mlr.press/v306/zhu26g.html" target="_blank" rel="noopener noreferrer" data-i18n="paper">Paper ↗</a><a href="https://arxiv.org/abs/2606.01351" target="_blank" rel="noopener noreferrer">arXiv ↗</a><a href="https://github.com/NJUNLP/orchestrator_entropy" target="_blank" rel="noopener noreferrer" data-i18n="code">Code ↗</a><a href="citations.bib" download data-i18n="bibtex">BibTeX</a></div>
+            </div>
+          </article>
+          <article class="publication">
+            <div class="publication-year">2024</div>
+            <div class="publication-content">
+              <h3><a href="https://proceedings.mlr.press/v269/zhu25a.html" target="_blank" rel="noopener noreferrer">Knowledge Graph Preference Contrastive Learning for Recommendation</a></h3>
+              <p class="authors"><strong>Junze Zhu</strong>, Zhongyi Hu, Fan Zhang</p>
+              <p class="venue"><strong>LoG 2024</strong> <span data-i18n="logProceedings">· Proceedings published in PMLR 269, 2025</span></p>
+              <p class="publication-summary" data-i18n="kpclSummary">Preference-aware contrastive learning and rationale attention filter task-irrelevant knowledge-graph noise for recommendation.</p>
+              <div class="publication-links"><a href="https://proceedings.mlr.press/v269/zhu25a.html" target="_blank" rel="noopener noreferrer" data-i18n="paper">Paper ↗</a><a href="https://github.com/HuiCir/KPCL" target="_blank" rel="noopener noreferrer" data-i18n="code">Code ↗</a><a href="citations.bib" download data-i18n="bibtex">BibTeX</a></div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="about" aria-labelledby="about-title">
+        <div class="section-heading"><h2 id="about-title" data-i18n="aboutTitle">About &amp; interests</h2></div>
+        <div class="about-grid">
+          <div class="about-copy"><p data-i18n="aboutCopy">I am a Ph.D. candidate at Nanjing University. My research examines the relationship between agent policies and their execution environments: how coordination evolves, how useful information arrives, and how runtime constraints can be learned.</p><p data-i18n="aboutGraphs">My earlier work studies knowledge-aware recommendation through graph representation learning. Across these topics, I am interested in understanding the structure behind effective learning and decision-making systems.</p></div>
+          <div class="research-focus"><h3 data-i18n="focusTitle">Research focus</h3><ul><li data-i18n="focusOne">LLM agents &amp; multi-agent dynamics</li><li data-i18n="focusTwo">Speculative &amp; asynchronous execution</li><li data-i18n="focusThree">Harness-aligned policy learning</li><li data-i18n="focusFour">Knowledge graphs &amp; recommendation</li></ul></div>
+        </div>
+      </section>
+      <footer class="site-footer"><span>© 2026 Junze Zhu</span><span data-i18n="updated">Updated October 2026</span><a href="#main" data-i18n="backTop">Back to top ↑</a></footer>
+    </main>
+  </div>
+</body>
+</html>
