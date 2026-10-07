@@ -61,20 +61,28 @@ button:focus-visible, a:focus-visible, summary:focus-visible, [tabindex]:focus-v
 
 /* One world plane: map, path, traveler and cast all share its camera transform. */
 .odyssey-stage { position: fixed; z-index: 0; inset: 0; overflow: hidden; pointer-events: none; background: #dfc08a; isolation: isolate; }
-.map-backdrop { position: absolute; inset: -25px; background: url("assets/characters/quest-map.png") center/cover no-repeat; filter: blur(11px); opacity: .7; }
+.map-backdrop { position: absolute; inset: -25px; background: radial-gradient(ellipse at 44% 38%, #f2ddb0, #ead09b 72%), linear-gradient(130deg, #ead09b, #e2c48c); opacity: 1; }
 .map-backdrop img { width: 100%; height: 100%; object-fit: cover; }
 .map-plane { position: absolute; left: 0; top: 0; width: 100vw; height: 56.28vw; transform-origin: 0 0; will-change: transform; }
-.map-image { width: 100%; height: 100%; max-width: none; object-fit: contain; user-select: none; }
+.map-image { width: 100%; height: 100%; max-width: none; object-fit: contain; user-select: none; mask-image: linear-gradient(to bottom, transparent, black 4%, black 97%, transparent); }
 .route-svg { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; overflow: visible; pointer-events: none; }
 .route-progress { fill: none; stroke: #f8d76d; stroke-width: 3; opacity: .65; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 5px #ffe39d99); }
 .route-shadow { fill: none; stroke: #6f421e55; stroke-width: 9; stroke-linecap: round; }
 .walker { position: absolute; z-index: 8; width: 8%; height: 21%; transform: translate(-50%, -100%); pointer-events: none; filter: drop-shadow(0 8px 6px #32201644); }
 .walker img { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: contain; object-position: center bottom; transition: opacity .6s; }
-.walker .equipped { opacity: 0; }
+.walker .equipped { opacity: 0; transform: scale(.68); transform-origin: center bottom; }
 body[data-scene="3"] .walker .initial, body[data-scene="4"] .walker .initial, body[data-scene="5"] .walker .initial, body[data-scene="6"] .walker .initial, body[data-scene="7"] .walker .initial { opacity: 0; }
 body[data-scene="3"] .walker .equipped, body[data-scene="4"] .walker .equipped, body[data-scene="5"] .walker .equipped, body[data-scene="6"] .walker .equipped, body[data-scene="7"] .walker .equipped { opacity: 1; }
 .cast { position: absolute; z-index: 5; transform: translate(-50%, -100%); pointer-events: none; }
+.js-boot .cast { display: none; }
+.js-boot .cast.texture-requested { display: block; }
+.js-boot .walker img:not([data-texture-requested]) { display: none; }
+.js-boot .map-plane img { visibility: hidden; }
+.js-boot .map-plane img[data-texture-ready="true"] { visibility: visible; }
 .cast img { width: 100%; height: 100%; object-fit: contain; object-position: center bottom; max-width: none; filter: drop-shadow(0 7px 10px #402d2233); }
+.cast.bust img, .walker .equipped { mask-image: linear-gradient(to bottom, #000 0, #000 88%, rgba(0,0,0,.92) 92%, transparent 100%); mask-repeat: no-repeat; mask-size: 100% 100%; }
+.js-boot:not(.world-ready) .map-plane { opacity: 0; }
+.js-boot:not(.world-ready) .apparition { transition: none; }
 .cast figcaption { text-align: center; font: 10px/1.5 var(--serif); letter-spacing: .09em; color: #5d3a20; }
 .apparition { opacity: 0; transition: opacity .8s ease; }
 body[data-scene="0"] .king, body[data-scene="1"] .king,
@@ -283,7 +291,6 @@ body[data-language="zh"] :where(.chronicle, .archive-source) h2 { line-height: 1
 html:not(.enhanced) .journey-hud, html:not(.enhanced) .menu-toggle { display: none; }
 html:not(.enhanced) .chapter-nav { display: none; }
 html:not(.enhanced) .story-beat { min-height: 100svh; }
-html:not(.enhanced) .apparition { opacity: .35; }
 html:not(.enhanced) .archive-source .result-panel[hidden] { display: block !important; }
 html:not(.enhanced) .archive-source .tabs, html:not(.enhanced) .archive-source .metric-toggle { display: none; }
 
@@ -451,7 +458,7 @@ html:not(.enhanced) .archive-source .tabs, html:not(.enhanced) .archive-source .
 
 .drawer-home { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 15px !important; font: 12px/1.6 var(--sans) !important; }
 
-@media(max-width:850px){.map-plane{mask-image:linear-gradient(to bottom,transparent,black 12%,black 94%,transparent),linear-gradient(to right,transparent,black 6%,black 94%,transparent);mask-composite:intersect;}.map-backdrop{opacity:.28;filter:blur(18px)}.odyssey-stage{background:#ead09b}}
+@media(max-width:850px){.map-image{mask-image:linear-gradient(to bottom,transparent,black 12%,black 94%,transparent),linear-gradient(to right,transparent,black 6%,black 94%,transparent);mask-composite:intersect;}.map-backdrop{opacity:1;filter:none}.odyssey-stage{background:#ead09b}}
 
 .myth-philosophy-archive{margin-top:35px;padding-top:22px;border-top:1px solid var(--line)}.myth-philosophy-archive summary{cursor:pointer;min-height:44px;color:#765027;font:18px/1.8 var(--serif)}.myth-philosophy-transcript{max-width:850px;padding-top:25px;font-size:13px;line-height:1.9}.myth-philosophy-transcript h3{margin-top:36px}.myth-philosophy-transcript h4{font:20px/1.5 var(--serif);margin:26px 0 10px}.myth-philosophy-transcript img{width:72px;height:108px;object-fit:contain;float:left;margin:0 18px 12px 0}.myth-philosophy-transcript p{display:flow-root}.myth-mapping-transcript{margin:25px 0}.myth-mapping-transcript dt{font-weight:600;margin-top:16px}.myth-mapping-transcript dd{margin:4px 0 0 20px}.myth-philosophy-transcript blockquote{margin:28px 0;padding-left:22px;border-left:2px solid #a77a35;font:19px/1.8 var(--serif)}
 

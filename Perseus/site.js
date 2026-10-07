@@ -145,6 +145,91 @@
     for(let i=0;i<=600;i++){const p=route.getPointAtLength(routeLength*i/600),d=(p.x/1672-scene.anchor[0])**2+(p.y/941-scene.anchor[1])**2;if(d<distance){distance=d;best=i/600;}}
     return best;
   });
+  const textureImages=[...plane.querySelectorAll('img')];
+  const textureByName=new Map(textureImages.map(img=>[new URL(img.src).pathname.split('/').pop(),img]));
+  const textureRequests=new WeakMap(),textureQueue=[];
+  const sceneTextureNames=[
+    ['perseus-initial.png','polydectes.png'],
+    ['perseus-initial.png','polydectes.png'],
+    ['perseus-initial.png'],
+    ['perseus-equipped.png','athena.png','hermes.png','nymph.png'],
+    ['perseus-equipped.png','hades.png'],
+    ['perseus-equipped.png','medusa-shadow.png'],
+    ['perseus-equipped.png','medusa-shadow.png'],
+    ['perseus-equipped.png']
+  ];
+  let textureJobs=0,worldReady=false,lastTextureScene=-1;
+  const textureDelay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+  function waitForTexture(img,retry,original){
+    return new Promise((resolve,reject)=>{
+      let timeout,settled=false;
+      function finish(error){if(settled)return;settled=true;clearTimeout(timeout);img.removeEventListener('load',loaded);img.removeEventListener('error',failed);error?reject(error):resolve();}
+      const loaded=()=>img.decode().then(()=>finish(),failed),failed=()=>finish(new Error('Texture unavailable'));
+      img.addEventListener('load',loaded);img.addEventListener('error',failed);
+      timeout=setTimeout(()=>finish(new Error('Texture timed out')),12000);
+      img.loading='eager';
+      if(retry){const url=new URL(original,location.href);url.searchParams.set('retry',String(retry));img.src=url.href;}
+      if(img.complete){if(img.naturalWidth>0)loaded();else if(!retry)failed();}
+    });
+  }
+  async function decodeTexture(img){
+    const original=img.getAttribute('src');img.dataset.textureRequested='true';img.closest('.cast')?.classList.add('texture-requested');
+    for(let retry=0;retry<3;retry++){
+      try{
+        if(retry)await textureDelay(retry===1?400:1200);
+        await waitForTexture(img,retry,original);
+        img.dataset.textureReady='true';img.removeAttribute('data-texture-failed');return true;
+      }catch{}
+    }
+    img.dataset.textureFailed='true';return false;
+  }
+  function drainTextureQueue(){
+    while(textureJobs<2&&textureQueue.length){
+      const job=textureQueue.shift();textureJobs++;
+      decodeTexture(job.img).then(job.resolve).finally(()=>{textureJobs--;drainTextureQueue();});
+    }
+  }
+  function requestTexture(img,priority=1){
+    if(!img)return Promise.resolve(false);
+    if(textureRequests.has(img)){
+      const queued=textureQueue.find(job=>job.img===img);
+      if(queued&&priority<queued.priority){queued.priority=priority;textureQueue.sort((a,b)=>a.priority-b.priority);}
+      return textureRequests.get(img);
+    }
+    const promise=new Promise(resolve=>textureQueue.push({img,priority,resolve}));
+    textureRequests.set(img,promise);textureQueue.sort((a,b)=>a.priority-b.priority);drainTextureQueue();return promise;
+  }
+  const mapImage=document.querySelector('.map-image');
+  let mapTextureReady=requestTexture(mapImage,0);
+  function requestSceneTextures(index){
+    if(index!==lastTextureScene){
+      lastTextureScene=index;
+      if(mapImage.dataset.textureFailed){textureRequests.delete(mapImage);mapTextureReady=requestTexture(mapImage,0);}
+      sceneTextureNames[index].forEach(name=>{const img=textureByName.get(name);if(img?.dataset.textureFailed)textureRequests.delete(img);});
+    }
+    const needed=sceneTextureNames[index].map(name=>requestTexture(textureByName.get(name),0));
+    if(!worldReady)Promise.all([mapTextureReady,...needed]).then(results=>{
+      // Text stays available if a connection fails; never reveal an undecoded map.
+      if(results[0]&&!worldReady&&index===currentScene){worldReady=true;document.documentElement.classList.add('world-ready');requestFrame();}
+    });
+    else if(index<scenes.length-1)sceneTextureNames[index+1].forEach(name=>requestTexture(textureByName.get(name),2));
+  }
+  const imageRecoveries=new WeakMap();
+  function resetImageRecovery(img,source){
+    const old=imageRecoveries.get(img);if(old)clearTimeout(old.timer);
+    imageRecoveries.set(img,{source,retries:0,timer:undefined});
+  }
+  // A reused lightbox image must not inherit another figure's delayed retry.
+  document.querySelectorAll('img').forEach(img=>{
+    if(textureImages.includes(img))return;
+    resetImageRecovery(img,img.getAttribute('src'));
+    const recover=()=>{
+      const state=imageRecoveries.get(img);if(!state.source||state.retries>=2)return;state.retries++;
+      state.timer=setTimeout(()=>{if(imageRecoveries.get(img)!==state)return;const url=new URL(state.source,location.href);url.searchParams.set('retry',String(state.retries));img.src=url.href;},state.retries*500);
+    };
+    img.addEventListener('error',recover);
+    if(img.complete&&!img.naturalWidth&&img.getAttribute('src'))recover();
+  });
   let framePending=false,currentScene=0;
   function renderWorld(){
     framePending=false;const y=window.scrollY;let lower=0;
@@ -153,6 +238,7 @@
     const t=lower===beats.length-1?0:Math.min(1,Math.max(0,(y-beats[lower].offsetTop)/span));
     const position=lower+t,index=Math.min(7,Math.round(position));currentScene=index;
     document.body.dataset.scene=String(index);
+    requestSceneTextures(index);
     const cameraT=reduced.matches?0:t,first=scenes[reduced.matches?index:lower].camera,last=scenes[Math.min(7,lower+1)].camera;
     const camera=first.map((v,i)=>v+(last[i]-v)*cameraT);
     const w=innerWidth,h=innerHeight;const baseW=Math.max(w,h*1672/941),baseH=baseW*941/1672;
@@ -260,8 +346,8 @@
   atlas.querySelector('.close-atlas').addEventListener('click',()=>atlas.close());atlas.addEventListener('close',syncModalState);
   atlas.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>atlas.close()));
   const dialog=document.getElementById('figure-dialog'),image=document.getElementById('enlarged-figure');
-  document.querySelectorAll('.zoom-figure').forEach(link=>link.addEventListener('click',e=>{if(typeof dialog.showModal!=='function')return;e.preventDefault();zoomOpener=link;image.src=link.href;image.alt=link.querySelector('img').alt;dialog.showModal();syncModalState();}));
-  dialog.querySelector('.close-lightbox').addEventListener('click',()=>dialog.close());dialog.addEventListener('close',()=>{syncModalState();zoomOpener?.focus({preventScroll:true});});
+  document.querySelectorAll('.zoom-figure').forEach(link=>link.addEventListener('click',e=>{if(typeof dialog.showModal!=='function')return;e.preventDefault();zoomOpener=link;resetImageRecovery(image,link.href);image.src=link.href;image.alt=link.querySelector('img').alt;dialog.showModal();syncModalState();}));
+  dialog.querySelector('.close-lightbox').addEventListener('click',()=>dialog.close());dialog.addEventListener('close',()=>{resetImageRecovery(image,null);syncModalState();zoomOpener?.focus({preventScroll:true});});
   function handleHash(){const id=location.hash.slice(1),legacy={myth:'summons',philosophy:'horizon',main:'summons'};if(archiveIds.includes(id)){openArchive(id,null,null,false);return;}if(chronicle.open)chronicle.close();if(legacy[id])document.getElementById('scene-'+legacy[id]).scrollIntoView({behavior:'instant'});requestFrame();}
   window.addEventListener('hashchange',handleHash);window.addEventListener('popstate',handleHash);
   const waveObserver=new IntersectionObserver(entries=>{waveVisible=entries[0].isIntersecting&&entries[0].intersectionRatio>=.12;syncWave();},{root:chronicle,threshold:[0,.12]});
@@ -269,6 +355,9 @@
   reduced.addEventListener?.('change',()=>{stopPlay();waveElapsed=0;renderDemo();syncWave();});
   document.querySelector('.wave-transcript').open=false;
   document.documentElement.classList.remove('no-js');document.documentElement.classList.add('enhanced');
-  applyLanguage(language,false);requestFrame();handleHash();
+  applyLanguage(language,false);
+  const initialScene=scenes.findIndex(scene=>'#scene-'+scene.id===location.hash);
+  if(initialScene>=0)beats[initialScene].scrollIntoView({behavior:'instant'});
+  renderWorld();handleHash();
   if(location.hash.startsWith('#scene-')){navigationIntent=true;scheduleSettle();}
 })();
