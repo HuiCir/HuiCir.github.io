@@ -1,5 +1,7 @@
 window.PERSEUS_COPY = {
   "en": {
+    "paperLink": "Paper ↗",
+    "sceneGuide": "Research opens automatically on arrival. Select above to reopen.",
     "navMyth": "Myth",
     "navPhilosophy": "Philosophy",
     "navMethod": "Method",
@@ -195,6 +197,8 @@ window.PERSEUS_COPY = {
     "waveTranscript": "Read the complete wave"
   },
   "zh": {
+    "paperLink": "论文 ↗",
+    "sceneGuide": "到达本幕时自动展开论文内容；点击上方可再次打开。",
     "navMyth": "神话",
     "navPhilosophy": "哲学",
     "navMethod": "算法",
