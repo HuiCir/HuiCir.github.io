@@ -68,11 +68,9 @@ window.PERSEUS_COPY = {
     "invTitle2": "Finish without a join",
     "invDesc2": "Only ready results from older requests are inspected. Termination cancels pending work and settles cleanup; epoch changes reject late publication.",
     "ledgerCaption": "Ready-only admission preserves pending lifetimes and complete observations with source identities.",
-    "demoTitleK": "INTERACTIVE FIELD GUIDE",
+    "demoTitleK": "A WAVE IN MOTION",
     "demoTitle": "Follow one exploration wave",
-    "demoIntro": "Step through one wave across Actor boundaries. This deterministic visualization shows logical stages only: it is not a live agent run, a timed replay, or a performance measurement. Later waves are omitted to keep this wave visible.",
-    "playDemo": "Play →",
-    "resetDemo": "Reset",
+    "demoIntro": "Watch one wave unfold automatically across Actor boundaries. This is a logical animation, not a live agent run or a measured replay. Three branches illustrate one selected wave; later waves are omitted.",
     "ledgerTitle": "Evidence ledger",
     "resultsTitleK": "REPORTED RESULTS",
     "resultsTitle": "What the experiments show",
@@ -189,7 +187,12 @@ window.PERSEUS_COPY = {
     "mapNote": "An illustrated story world, not a historical map or a timed execution trace.",
     "returnHome": "Academic home ↗",
     "chronicleTitle": "The research chronicle",
-    "backJourney": "Return to the journey ×"
+    "backJourney": "Return to the journey ×",
+    "waveFinish": "Finish",
+    "waveAccessibleTitle": "One asynchronous exploration wave",
+    "waveAccessibleSummary": "The Actor continues while three independent acquisitions run. Ready observations enter only at later Actor boundaries. The Actor finishes and cancels the remaining Future. A complete six-stage transcript follows.",
+    "waveNote": "24 seconds of narrative motion · not execution time. Ready is not admitted; only the Actor commits.",
+    "waveTranscript": "Read the complete wave"
   },
   "zh": {
     "navMyth": "神话",
@@ -260,11 +263,9 @@ window.PERSEUS_COPY = {
     "invTitle2": "完成时无需全体等待",
     "invDesc2": "仅检查早先请求已完成的结果。结束时取消未完成工作并清理；epoch 变化阻止迟到结果发布。",
     "ledgerCaption": "Ready-only 接收保留未完成工作的生命周期，以及带来源身份的完整观察。",
-    "demoTitleK": "交互式示意",
+    "demoTitleK": "探索波次 · 自动演绎",
     "demoTitle": "跟随一次探索波次",
-    "demoIntro": "逐步观察一个波次跨越 Actor 边界。此确定性可视化仅表示逻辑阶段，不是实时智能体运行、计时回放或性能测量；为突出这个波次，后续波次未画出。",
-    "playDemo": "播放 →",
-    "resetDemo": "重置",
+    "demoIntro": "自动观看一个波次跨越 Actor 边界。这是一段逻辑动画，不是实时智能体运行或计时回放。三条分支仅示意一个选取的波次，后续波次未画出。",
     "ledgerTitle": "证据 ledger",
     "resultsTitleK": "论文报告的实验结果",
     "resultsTitle": "实验揭示了什么",
@@ -381,6 +382,11 @@ window.PERSEUS_COPY = {
     "mapNote": "这是一幅叙事世界地图，不是历史地理地图，也不是计时执行轨迹。",
     "returnHome": "学术主页 ↗",
     "chronicleTitle": "研究卷轴",
-    "backJourney": "返回旅程 ×"
+    "backJourney": "返回旅程 ×",
+    "waveFinish": "完成",
+    "waveAccessibleTitle": "一个异步探索波次",
+    "waveAccessibleSummary": "Actor 继续前行，三条独立采集同时运行。已完成的观察仅在后续 Actor 边界进入证据账本。最后由 Actor 完成任务并取消剩余 Future。下方附完整六阶段说明。",
+    "waveNote": "24 秒为叙事编排，并非执行耗时。完成不等于接收；只有 Actor 提交。",
+    "waveTranscript": "阅读完整波次说明"
   }
 };

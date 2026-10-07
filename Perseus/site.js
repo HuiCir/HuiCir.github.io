@@ -5,7 +5,7 @@
   const header = document.querySelector('.project-header');
   const langButton = document.querySelector('.lang-toggle');
   const menuButton = document.querySelector('.menu-toggle');
-  let language = 'en', metric = 'ts', demoStep = 0, playTimer, zoomOpener;
+  let language = 'en', metric = 'ts', demoStep = 0, zoomOpener;
   try { language = localStorage.getItem('perseus-site-language') || localStorage.getItem('academic-homepage-language') || 'en'; } catch {}
   if (!['en','zh'].includes(language)) language = 'en';
   const l = (en, zh) => language === 'zh' ? zh : en;
@@ -37,32 +37,90 @@
     table('cost-table',[l('Method','方法'),'TS (%)','ES',l('Normalized budget','归一化用量')],data.cost.map(r=>[r.method,num(r.ts_percent,1),num(r.es_milli_per_second),num(r.normalized_budget,3)+'×']),l('Figure 9 values · ES ×10⁻³ s⁻¹','图 9 数值 · ES ×10⁻³ s⁻¹'));
     table('bfcl-table',[l('Group / cases','类别 / 案例'),'PERSEUS','ReAct','CMAS','DMAS'],Object.entries(data.bfcl).map(([group,r])=>[group+' / '+r.cases,...['PERSEUS','ReAct','CMAS','DMAS'].map(method=>num(r[method].accuracy_percent)+' / '+num(r[method].mean_seconds))]),l('Table 5 · strict accuracy (%) / mean time (s)','表 5 · 严格准确率（%）/ 平均耗时（秒）'));
   }
-  function renderDemo() {
-    const current=demo[demoStep];const stages=document.getElementById('demo-stages');const focusedStage=[...stages.children].indexOf(document.activeElement);stages.replaceChildren();
-    demo.forEach((step,index)=>{const button=node('button',l(...step.title),'demo-stage'+(index===demoStep?' active':''));button.type='button';button.setAttribute('aria-pressed',String(index===demoStep));button.addEventListener('click',()=>{stopPlay();demoStep=index;renderDemo();});stages.append(button);});
-    if(focusedStage>=0)stages.children[focusedStage]?.focus({preventScroll:true});
-    document.getElementById('demo-count').textContent=l('Step ','步骤 ')+(demoStep+1)+' / '+demo.length;
-    const actor=document.getElementById('actor-track');actor.replaceChildren();
-    ['A(t)',l('Native tools','原生工具'),'A(t+1)',l('Native tools','原生工具'),'A(t+2)',l('Complete','完成')].forEach((text,i)=>actor.append(node('div',text,'demo-step'+(i===current.actor?' active':'')+(i<current.actor?' ready':''))));
-    current.s.forEach((state,index)=>{const target=document.getElementById('s'+(index+1)+'-track');target.replaceChildren();
-      const task=[l('Catalog inspection','目录检查'),l('Policy inspection','政策检查'),l('Slow diagnostic','慢速诊断')][index];
-      target.append(node('div',task,'demo-step'));
-      target.append(node('div',[l('Pending Future','未完成 Future'),l('Ready','已完成'),l('Admitted / reviewed','已接收 / 已审阅'),l('Cancelled · cleanup','已取消 · 清理')][state],'demo-step '+(state===0?'pending':state===3?'cancelled':'ready')));
+  const waveFilm=document.getElementById('wave-film');
+  const waveLanes=[...waveFilm.querySelectorAll('.wave-lane')];
+  const waveRails=waveLanes.map(lane=>lane.querySelector('.wave-rail'));
+  const waveDuration=24000,phaseDuration=4000;
+  let waveElapsed=0,waveFrameId,waveLastTime,waveVisible=false;
+  const waveCaptions=[
+    ['One Actor, three independent Futures.','一个 Actor，三条独立 Future。'],
+    ['Ready, but not yet admitted.','结果已完成，但尚未被接收。'],
+    ['At t+1, one observation enters the ledger.','在 t+1，一条观察进入证据账本。'],
+    ['Another result arrives; the slow Future stays alive.','又一条结果完成；较慢的 Future 继续运行。'],
+    ['At t+2, new evidence enters; a duplicate is suppressed.','在 t+2，新证据被接收，已识别的重复被抑制。'],
+    ['The Actor finishes. Pending work is cancelled and cleaned up.','Actor 完成任务，剩余工作被取消并完成清理。']
+  ];
+  const waveRecords=[
+    ['Catalog observation · copy S₁ · provenance retained','目录观察 · 副本 S₁ · 保留来源'],
+    ['New policy observation · copy S₂ · added to history','新政策观察 · 副本 S₂ · 加入历史'],
+    ['Same-source catalog duplicate · reviewed / suppressed','同来源的目录重复 · 已审阅 / 已抑制']
+  ];
+  function updateWaveMotion(){
+    const time=reduced.matches?waveDuration:waveElapsed;
+    const pct=(value)=>Math.max(0,Math.min(1,value));
+    const actorTravel=5+89*pct(time/20000);
+    waveRails[0].style.setProperty('--travel',actorTravel+'%');
+    waveRails[0].style.setProperty('--beam',actorTravel+'%');
+    [4000,12000,23000].forEach((finish,i)=>{
+      const progress=pct(Math.min(time,20000)/finish),travel=5+89*progress;
+      waveRails[i+1].style.setProperty('--travel',travel+'%');
+      waveRails[i+1].style.setProperty('--beam',travel+'%');
+      waveRails[i+1].style.setProperty('--work',progress*100+'%');
     });
-    const ledger=document.getElementById('ledger-entries');ledger.replaceChildren();
-    if(current.ledger===0)ledger.append(node('p',l('No older ready observation admitted yet.','尚未接收早先已完成的观察。'),'ledger-empty'));
-    if(current.ledger>=1)ledger.append(node('div',l('Catalog record · source identity retained · independent copy S₁','目录记录 · 保留来源身份 · 独立副本 S₁'),'ledger-entry'));
-    if(current.ledger>=2){ledger.append(node('div',l('Policy record · new evidence · independent copy S₂','政策记录 · 新证据 · 独立副本 S₂'),'ledger-entry'));ledger.append(node('div',l('Known catalog duplicate · reviewed, not appended twice','已知目录重复 · 已审阅，不重复追加'),'ledger-entry deduplicated'));}
-    document.getElementById('demo-description').textContent=l(...current.description);
-    document.getElementById('demo-play').textContent=playTimer?l('Pause Ⅱ','暂停 Ⅱ'):l('Play →','播放 →');
+    // Only boundary-admitted evidence travels to the ledger; ready stays on its own rail.
+    waveLanes[1].querySelector('.wave-delivery').classList.toggle('is-delivering',!reduced.matches&&time>=8000&&time<9200);
+    waveLanes[2].querySelector('.wave-delivery').classList.toggle('is-delivering',!reduced.matches&&time>=16000&&time<17200);
   }
-  function stopPlay(){if(playTimer)clearInterval(playTimer);playTimer=undefined;}
+  function renderDemo(){
+    demoStep=reduced.matches?5:Math.min(5,Math.floor(waveElapsed/phaseDuration));
+    const current=demo[demoStep];waveFilm.dataset.phase=String(demoStep);
+    document.getElementById('demo-count').textContent=['I','II','III','IV','V','VI'][demoStep]+' / VI';
+    document.getElementById('wave-title').textContent=l(...current.title);
+    document.getElementById('demo-description').textContent=l(...waveCaptions[demoStep]);
+    document.getElementById('wave-actor-status').textContent=demoStep===5?l('Task complete · authoritative Actor','任务完成 · 权威 Actor'):l('One continuing mainline','一条持续推进的主线');
+    waveLanes[0].dataset.state=demoStep===5?'admitted':'pending';
+    const names=[['Catalog inspection','目录检查'],['Policy inspection','政策检查'],['Slow diagnostic','慢速诊断']];
+    current.s.forEach((state,i)=>{
+      const lane=waveLanes[i+1];lane.dataset.state=['pending','ready','admitted','cancelled'][state];
+      lane.querySelector('.wave-work').textContent=l(...names[i]);
+      lane.querySelector('.wave-status').textContent=[l('Pending Future','未完成 Future'),l('Ready · retained','完成 · 待接收'),l('Admitted / reviewed','已接收 / 已审阅'),l('Cancelled · cleanup','已取消 · 清理')][state];
+    });
+    document.getElementById('wave-empty').hidden=current.ledger>0;
+    document.getElementById('wave-empty').textContent=l('No older ready observation admitted yet.','尚未接收早先已完成的观察。');
+    ['wave-catalog','wave-policy','wave-duplicate'].forEach((id,i)=>{
+      const entry=document.getElementById(id);entry.textContent=l(...waveRecords[i]);entry.hidden=current.ledger<(i===0?1:2);
+    });
+    const transcript=document.getElementById('wave-transcript-list');
+    [...transcript.children].forEach((item,i)=>{item.querySelector('h4').textContent=l(...demo[i].title);item.querySelector('p').textContent=l(...demo[i].description);});
+    updateWaveMotion();
+  }
+  function stopPlay(){
+    if(waveFrameId!==undefined)cancelAnimationFrame(waveFrameId);
+    waveFrameId=undefined;waveLastTime=undefined;waveFilm.dataset.running='false';
+  }
+  function resetWave(){stopPlay();waveElapsed=0;renderDemo();}
+  function waveIsActive(){return chronicle.open&&!document.getElementById('demo').hidden&&waveVisible&&!document.hidden&&!reduced.matches&&waveElapsed<waveDuration;}
+  function waveFrame(time){
+    waveFrameId=undefined;
+    if(!waveIsActive()){stopPlay();return;}
+    if(waveLastTime!==undefined)waveElapsed=Math.min(waveDuration,waveElapsed+Math.max(0,Math.min(250,time-waveLastTime)));
+    waveLastTime=time;
+    const next=Math.min(5,Math.floor(waveElapsed/phaseDuration));
+    if(next!==demoStep)renderDemo();else updateWaveMotion();
+    if(waveElapsed>=waveDuration){stopPlay();renderDemo();return;}
+    waveFrameId=requestAnimationFrame(waveFrame);
+  }
+  function syncWave(){
+    if(!waveIsActive()){stopPlay();return;}
+    if(waveFrameId!==undefined)return;
+    waveFilm.dataset.running='true';waveLastTime=undefined;waveFrameId=requestAnimationFrame(waveFrame);
+  }
   function applyLanguage(next,persist=true){
     language=next;document.documentElement.lang=language==='zh'?'zh-Hans':'en';document.body.dataset.language=language;
     document.querySelectorAll('[data-i18n]').forEach(el=>{const value=copies?.[language]?.[el.dataset.i18n];if(typeof value==='string')el.textContent=value;});
     langButton.textContent=language==='en'?'中文':'English';langButton.hidden=false;langButton.setAttribute('aria-label',language==='en'?'Switch to Chinese':'切换为英文');
     if(persist)try{localStorage.setItem('perseus-site-language',language);}catch{}
-    renderTables();renderDemo(); if (window.requestOdysseyFrame) window.requestOdysseyFrame();
+    renderTables();renderDemo();syncWave(); if (window.requestOdysseyFrame) window.requestOdysseyFrame();
   }
   const scenes=[
     {id:'summons',anchor:[.10,.579],camera:[.5,.5,.92]},
@@ -128,14 +186,18 @@
   function activateTab(button,focus=false){tabs.forEach(tab=>{const selected=tab===button;tab.setAttribute('aria-selected',String(selected));tab.tabIndex=selected?0:-1;document.getElementById(tab.getAttribute('aria-controls')).hidden=!selected;});if(focus)button.focus();}
   tabs.forEach((button,index)=>{button.addEventListener('click',()=>activateTab(button));button.addEventListener('keydown',e=>{let target;if(e.key==='ArrowRight')target=(index+1)%tabs.length;else if(e.key==='ArrowLeft')target=(index+tabs.length-1)%tabs.length;else if(e.key==='Home')target=0;else if(e.key==='End')target=tabs.length-1;else return;e.preventDefault();activateTab(tabs[target],true);});});
   document.querySelectorAll('[data-metric]').forEach(button=>button.addEventListener('click',()=>{metric=button.dataset.metric;document.querySelectorAll('[data-metric]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));renderTables();}));
-  document.getElementById('demo-play').addEventListener('click',()=>{if(playTimer){stopPlay();renderDemo();return;}if(demoStep===demo.length-1)demoStep=0;playTimer=setInterval(()=>{demoStep++;if(demoStep>=demo.length-1){demoStep=demo.length-1;stopPlay();}renderDemo();},1900);renderDemo();});
-  document.getElementById('demo-reset').addEventListener('click',()=>{stopPlay();demoStep=0;renderDemo();});
-  document.addEventListener('visibilitychange',()=>{if(document.hidden){stopPlay();renderDemo();}});
+  document.addEventListener('visibilitychange',syncWave);
   const chronicle=document.getElementById('chronicle-dialog'),archiveBody=document.getElementById('chronicle-body'),source=document.getElementById('chronicle-source');
   const archiveSections=[...source.querySelectorAll(':scope > .section')];archiveSections.forEach(section=>archiveBody.append(section));
-  const archiveIds=['method','demo','results','case','reference'];let archiveOpener,returnHash;
-  function chooseArchive(id,tab){archiveSections.forEach(section=>section.hidden=section.id!==id);document.querySelectorAll('[data-archive-target]').forEach(b=>b.setAttribute('aria-current',b.dataset.archiveTarget===id?'page':'false'));if(tab){const button=document.getElementById('tab-'+tab);if(button)activateTab(button);}chronicle.scrollTop=0;stopPlay();renderDemo();}
-  function openArchive(id,opener,tab,push=true){if(!archiveIds.includes(id))return;archiveOpener=opener||document.querySelector('[data-open-archive="'+id+'"]');if(!chronicle.open)returnHash=location.hash.startsWith('#scene-')?location.hash:'#scene-'+scenes[currentScene].id;chooseArchive(id,tab);if(!chronicle.open)chronicle.showModal();document.body.classList.add('archive-open');if(push)history.pushState({archive:id},'', '#'+id);}
+  const archiveIds=['method','demo','results','case','reference'];let archiveOpener,returnHash,selectedArchive='';
+  function chooseArchive(id,tab){
+    const restart=id==='demo'&&(selectedArchive!=='demo'||!chronicle.open);selectedArchive=id;
+    archiveSections.forEach(section=>section.hidden=section.id!==id);
+    document.querySelectorAll('[data-archive-target]').forEach(b=>b.setAttribute('aria-current',b.dataset.archiveTarget===id?'page':'false'));
+    if(tab){const button=document.getElementById('tab-'+tab);if(button)activateTab(button);}
+    chronicle.scrollTop=0;if(restart)resetWave();else renderDemo();syncWave();
+  }
+  function openArchive(id,opener,tab,push=true){if(!archiveIds.includes(id))return;archiveOpener=opener||document.querySelector('[data-open-archive="'+id+'"]');if(!chronicle.open)returnHash=location.hash.startsWith('#scene-')?location.hash:'#scene-'+scenes[currentScene].id;chooseArchive(id,tab);if(!chronicle.open)chronicle.showModal();document.body.classList.add('archive-open');syncWave();if(push)history.pushState({archive:id},'', '#'+id);}
   document.querySelectorAll('[data-open-archive]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();openArchive(a.dataset.openArchive,a,a.dataset.resultTab);}));
   document.querySelectorAll('[data-archive-target]').forEach(b=>b.addEventListener('click',()=>{chooseArchive(b.dataset.archiveTarget);history.replaceState({archive:b.dataset.archiveTarget},'', '#'+b.dataset.archiveTarget);}));
   chronicle.querySelector('.close-chronicle').addEventListener('click',()=>chronicle.close());
@@ -150,6 +212,10 @@
   dialog.querySelector('.close-lightbox').addEventListener('click',()=>dialog.close());dialog.addEventListener('close',()=>zoomOpener?.focus());
   function handleHash(){const id=location.hash.slice(1),legacy={myth:'summons',philosophy:'horizon',main:'summons'};if(archiveIds.includes(id)){openArchive(id,null,null,false);return;}if(chronicle.open)chronicle.close();if(legacy[id])document.getElementById('scene-'+legacy[id]).scrollIntoView({behavior:'instant'});requestFrame();}
   window.addEventListener('hashchange',handleHash);window.addEventListener('popstate',handleHash);
+  const waveObserver=new IntersectionObserver(entries=>{waveVisible=entries[0].isIntersecting&&entries[0].intersectionRatio>=.12;syncWave();},{root:chronicle,threshold:[0,.12]});
+  waveObserver.observe(waveFilm.querySelector('.wave-reel'));
+  reduced.addEventListener?.('change',()=>{stopPlay();waveElapsed=0;renderDemo();syncWave();});
+  document.querySelector('.wave-transcript').open=false;
   document.documentElement.classList.remove('no-js');document.documentElement.classList.add('enhanced');
   applyLanguage(language,false);requestFrame();handleHash();
 })();
