@@ -1,0 +1,65 @@
+{
+  "source": "Author-supplied strict character set",
+  "assets": [
+    {
+      "file": "athena.png",
+      "originalFilename": "athena.png",
+      "sha256": "726633e411194f175d58b8cce2c48d7c70ab592a3e225c6d11d6f9347a0d5212",
+      "unchanged": true
+    },
+    {
+      "file": "hermes.png",
+      "originalFilename": "hermes-sword.png",
+      "sha256": "36b25d303bd204d38bf5ec4636b36a99ad6c4a0d5e1f4a5b5edb4ac50084973c",
+      "unchanged": true
+    },
+    {
+      "file": "nymph.png",
+      "originalFilename": "nymph-kibisis.png",
+      "sha256": "70372a30e956d9802299528193e94eee0b4b0e21a75c5a9b22c69c0ec123b64c",
+      "unchanged": true
+    },
+    {
+      "file": "hades.png",
+      "originalFilename": "hades.png",
+      "sha256": "3246eb2c2455b55fe4e4e394d92857d6cec3eaf7e7b888cf4ce1588ac1bc27a3",
+      "unchanged": true
+    },
+    {
+      "file": "polydectes.png",
+      "originalFilename": "polydectes.png",
+      "sha256": "d35b754c5f81b5ce9558320fcaa692253e38bc725e75b871e9defa0892ffcc58",
+      "unchanged": true
+    },
+    {
+      "file": "perseus-initial.png",
+      "originalFilename": "perseus-initial.png",
+      "sha256": "818ad5e1a7169c3633bf1fd409df9b58cb7208087b0ab562931f268680d6c1b9",
+      "unchanged": true
+    },
+    {
+      "file": "perseus-equipped.png",
+      "originalFilename": "perseus-equipped-plain-shield.png",
+      "sha256": "d2457907f29e879cc36eff73e0fc6a70144f07713659bce426f67888aa564135",
+      "unchanged": true
+    },
+    {
+      "file": "medusa-shadow.png",
+      "originalFilename": "medusa-boss-shadow.png",
+      "sha256": "bd0938149cbab58e77954c1a7fdf220228683009802fd8a6e66b7f0124a5a116",
+      "unchanged": true
+    },
+    {
+      "file": "medusa.png",
+      "originalFilename": "medusa.png",
+      "sha256": "29ade663ba5f1377b25dfe4a9ae073f60a266609b57a80dfb2bdd291c6abb034",
+      "unchanged": true
+    },
+    {
+      "file": "quest-map.png",
+      "originalFilename": "perseus-quest-map-bg.png",
+      "sha256": "b0de3554fb21255be9750c6f1518e81921c35702d6d20e8d4c3e7305966794a0",
+      "unchanged": true
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 window.SITE_COPY = {
   en: {
-    skip: 'Skip to content', navResearch: 'Research', navPapers: 'Publications', navAbout: 'About',
+    projectSite: 'Project site ↗', skip: 'Skip to content', navResearch: 'Research', navPapers: 'Publications', navAbout: 'About',
     role: 'Ph.D. candidate', affiliation: 'Nanjing University', location: 'Nanjing, China',
     profileNote: 'Language agents\nMulti-agent systems\nGraph learning',
     eyebrow: 'Research in language agents & learning', heroTitle: 'Language agents,\nfrom coordination\nto execution.',
@@ -22,7 +22,7 @@ window.SITE_COPY = {
     updated: 'Updated October 2026', backTop: 'Back to top ↑'
   },
   zh: {
-    skip: '跳转到正文', navResearch: '研究', navPapers: '发表论文', navAbout: '关于',
+    projectSite: '项目主页 ↗', skip: '跳转到正文', navResearch: '研究', navPapers: '发表论文', navAbout: '关于',
     role: '博士候选人', affiliation: '南京大学', location: '中国 · 南京',
     profileNote: '语言智能体\n多智能体系统\n图学习',
     eyebrow: '语言智能体与机器学习研究', heroTitle: '语言智能体，\n从协作机制\n到原生执行。',

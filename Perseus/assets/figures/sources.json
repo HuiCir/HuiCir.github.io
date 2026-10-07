@@ -1,0 +1,169 @@
+{
+  "sourceProject": "iclr_2027_perseus/Perseus",
+  "preparedOn": "2026-10-07",
+  "publicationScope": "Selected paper figures rendered as PNG. Full manuscript PDFs and LaTeX sources are not included.",
+  "figures": [
+    {
+      "name": "overview",
+      "file": "overview.png",
+      "source": "figures/overview.pdf",
+      "sourceSha256": "499e747f3855a7ec94d2fd184e5595cb656fcca2a5859eff8fd75041c1fc5271",
+      "sha256": "46f6fa10999714830eec5059c3b0b29fb6c490e6d114aa1245b28fb2ec04704c",
+      "width": 2200,
+      "height": 1636,
+      "bytes": 516979,
+      "sourcePage": 1,
+      "sourcePages": 1,
+      "sourcePageSizePt": [
+        408.2,
+        303.47
+      ],
+      "render": "Poppler pdftoppm; full MediaBox page; PNG; 2200 px width; proportional height; no crop or data redraw",
+      "visualReview": "Complete source boundary preserved; labels and plotted marks legible."
+    },
+    {
+      "name": "turn-density",
+      "file": "turn-density.png",
+      "source": "figures/turn_density_standard_pooled.pdf",
+      "sourceSha256": "e8da28ba75b0046867094ab14dd36f230029a815700690498f3c336ea765c2fd",
+      "sha256": "7930239b27336bb35e0e86d7e889c58a6c6378725c3921ea29d7cbe36c4704dd",
+      "width": 2200,
+      "height": 1053,
+      "bytes": 99486,
+      "sourcePage": 1,
+      "sourcePages": 1,
+      "sourcePageSizePt": [
+        993.6,
+        475.2
+      ],
+      "render": "Poppler pdftoppm; full MediaBox page; PNG; 2200 px width; proportional height; no crop or data redraw",
+      "visualReview": "Complete source boundary preserved; labels and plotted marks legible."
+    },
+    {
+      "name": "scaling",
+      "file": "scaling.png",
+      "source": "figures/scaling_1x2.pdf",
+      "sourceSha256": "57d8ecaa9d7e2b3efdf81d7c7164f8d66144ab2710b903a932053eeb8c89ef01",
+      "sha256": "483ce1ca076719a7eebcd80a533b23b15ab7699a75828d123f08654e3769acd4",
+      "width": 2200,
+      "height": 743,
+      "bytes": 133582,
+      "sourcePage": 1,
+      "sourcePages": 1,
+      "sourcePageSizePt": [
+        1152.0,
+        388.8
+      ],
+      "render": "Poppler pdftoppm; full MediaBox page; PNG; 2200 px width; proportional height; no crop or data redraw",
+      "visualReview": "Complete source boundary preserved; labels and plotted marks legible."
+    },
+    {
+      "name": "harness-comparison",
+      "file": "harness-comparison.png",
+      "source": "figures/automationbench-claude-gpt-2x4-es.pdf",
+      "sourceSha256": "ae66b62b341d013a864e920ef58922354ba880f1131f5529cdb33b7257601082",
+      "sha256": "871fbfae447706e1d52402b44752688d5fcb74f54a43f3a4b5ce29faa4f7f30f",
+      "width": 2200,
+      "height": 955,
+      "bytes": 162896,
+      "sourcePage": 1,
+      "sourcePages": 1,
+      "sourcePageSizePt": [
+        1195.2,
+        518.4
+      ],
+      "render": "Poppler pdftoppm; full MediaBox page; PNG; 2200 px width; proportional height; no crop or data redraw",
+      "visualReview": "Complete source boundary preserved; labels and plotted marks legible."
+    },
+    {
+      "name": "best-of-n",
+      "file": "best-of-n.png",
+      "source": "figures/react_perseus_best_of_n.pdf",
+      "sourceSha256": "b8a931aefa9236abb22d3b97bf15bdf8bc400c512b51b158e648661ffbb76bdb",
+      "sha256": "947dd836c2eac94cf888af7f021b20a82cb748edfb3f317fa34638eaa0235c8d",
+      "width": 2200,
+      "height": 660,
+      "bytes": 63134,
+      "sourcePage": 1,
+      "sourcePages": 1,
+      "sourcePageSizePt": [
+        792.0,
+        237.6
+      ],
+      "render": "Poppler pdftoppm; full MediaBox page; PNG; 2200 px width; proportional height; no crop or data redraw",
+      "visualReview": "Complete source boundary preserved; labels and plotted marks legible."
+    },
+    {
+      "name": "case-architecture",
+      "file": "case-architecture.png",
+      "source": "case_studies/finance4073/figures/architecture.pdf",
+      "sourceSha256": "a57a4eab307f8876d30924f2d5a44646c7784b7bfe8e07d9fffa410110f46bae",
+      "sha256": "3772de4b5954556031e6ca8f39f2a4b84a87a854a2b52c8211ee0c0238a454a4",
+      "width": 2200,
+      "height": 1030,
+      "bytes": 147607,
+      "sourcePage": 1,
+      "sourcePages": 1,
+      "sourcePageSizePt": [
+        530.64,
+        248.4
+      ],
+      "render": "Poppler pdftoppm; full MediaBox page; PNG; 2200 px width; proportional height; no crop or data redraw",
+      "visualReview": "Complete source boundary preserved; labels and plotted marks legible."
+    },
+    {
+      "name": "case-lifecycle",
+      "file": "case-lifecycle.png",
+      "source": "case_studies/finance4073/figures/task-lifecycle.pdf",
+      "sourceSha256": "1c390d106cb468aa92b28c6f4af09a63e8bdf5b7ddb74fdfb68011ce3d8cdb7d",
+      "sha256": "5d9f82c8f286ba8ff60b9eda822e299bf84eacf4d9dea906a37f3332594368de",
+      "width": 2200,
+      "height": 1006,
+      "bytes": 100445,
+      "sourcePage": 1,
+      "sourcePages": 1,
+      "sourcePageSizePt": [
+        413.19,
+        188.82
+      ],
+      "render": "Poppler pdftoppm; full MediaBox page; PNG; 2200 px width; proportional height; no crop or data redraw",
+      "visualReview": "Complete source boundary preserved; labels and plotted marks legible."
+    },
+    {
+      "name": "case-folding",
+      "file": "case-folding.png",
+      "source": "case_studies/finance4073/figures/serial-reference.pdf",
+      "sourceSha256": "e5c142848007a605828f5ed81c033ea6a9bfbb406d7b2de401857cc4ee9b1dfc",
+      "sha256": "a1f943abd8924299a50230a0a7e9696bed89251d9befb5f932821a9e22d6ccc8",
+      "width": 2200,
+      "height": 696,
+      "bytes": 77881,
+      "sourcePage": 1,
+      "sourcePages": 1,
+      "sourcePageSizePt": [
+        413.19,
+        130.608
+      ],
+      "render": "Poppler pdftoppm; full MediaBox page; PNG; 2200 px width; proportional height; no crop or data redraw",
+      "visualReview": "Complete source boundary preserved; labels and plotted marks legible."
+    },
+    {
+      "name": "ledger-protocol",
+      "file": "ledger-protocol.png",
+      "source": "figures/ledger-protocol.pdf",
+      "sourceSha256": "8a5ca58ef4e2383e23fdc1849fd725c3dfbc8b97fc9fe3d4b42f1bf883a8b6bd",
+      "sha256": "20041847a929e3b8b67a63c5d73536067850bf845eb6045c5622df88bf563799",
+      "width": 2200,
+      "height": 2500,
+      "bytes": 387197,
+      "sourcePage": 1,
+      "sourcePages": 1,
+      "sourcePageSizePt": [
+        675.12,
+        767.04
+      ],
+      "render": "Poppler pdftoppm; full MediaBox page; PNG; 2200 px width; proportional height; no crop or data redraw",
+      "visualReview": "Complete source boundary preserved; labels and plotted marks legible."
+    }
+  ]
+}
