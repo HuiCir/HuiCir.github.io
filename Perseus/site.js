@@ -42,6 +42,15 @@
   const waveFilm=document.getElementById('wave-film');
   const waveLanes=[...waveFilm.querySelectorAll('.wave-lane')];
   const waveRails=waveLanes.map(lane=>lane.querySelector('.wave-rail'));
+  const waveReel=waveFilm.querySelector('.wave-reel'),waveIntake=waveFilm.querySelector('.wave-intake');
+  const waveFlow=waveFilm.querySelector('.wave-flow');
+  const waveReceipts=[1,2].map(i=>document.getElementById('wave-receipt-'+i));
+  const waveTransfers=[1,2].map(i=>({
+    incoming:document.getElementById('wave-incoming-'+i),outgoing:document.getElementById('wave-return-'+i),
+    packet:document.getElementById('wave-packet-'+i),branch:waveFlow.querySelector('[data-flow="'+i+'"]')
+  }));
+  const duplicateRoute=document.getElementById('wave-incoming-duplicate'),duplicatePacket=document.getElementById('wave-packet-duplicate');
+  let waveGeometryReady=false;
   const waveDuration=24000,phaseDuration=4000;
   let waveElapsed=0,waveFrameId,waveLastTime,waveVisible=false;
   const waveCaptions=[
@@ -54,13 +63,41 @@
   ];
   const waveRecords=[
     ['Catalog observation · copy S₁ · provenance retained','目录观察 · 副本 S₁ · 保留来源'],
-    ['New policy observation · copy S₂ · added to history','新政策观察 · 副本 S₂ · 加入历史'],
+    ['New policy observation · copy S₂ · retained in ledger','新政策观察 · 副本 S₂ · 保留在 ledger'],
     ['Same-source catalog duplicate · reviewed / suppressed','同来源的目录重复 · 已审阅 / 已抑制']
   ];
+  function updateWavePaths(){
+    const box=waveReel.getBoundingClientRect();if(box.width<1||box.height<1){waveGeometryReady=false;return;}
+    waveFlow.setAttribute('viewBox',`0 0 ${box.width} ${box.height}`);
+    waveTransfers.forEach((transfer,i)=>{
+      const rail=waveRails[i+1].getBoundingClientRect(),actor=waveRails[0].getBoundingClientRect();
+      const port=waveReceipts[i].querySelector('.wave-receipt-port').getBoundingClientRect();
+      const sx=rail.left-box.left+rail.width*.94,sy=rail.top-box.top+parseFloat(getComputedStyle(waveRails[i+1].querySelector('.wave-orb')).top);
+      const tx=port.left-box.left+port.width/2,ty=port.top-box.top+port.height/2;
+      const ax=actor.left-box.left+actor.width*[.406,.762][i],ay=actor.top-box.top+parseFloat(getComputedStyle(waveRails[0].querySelector('.wave-orb')).top);
+      const edge=box.width-24;
+      const band=ty-20-i*10;
+      transfer.incoming.setAttribute('d',`M ${sx} ${sy} C ${edge} ${sy}, ${edge} ${band}, ${edge} ${band} L ${tx+20} ${band} Q ${tx} ${band}, ${tx} ${ty}`);
+      transfer.outgoing.setAttribute('d',`M ${tx} ${ty} C ${tx} ${ty-26}, ${ax} ${ay+25}, ${ax} ${ay}`);
+      transfer.inLength=transfer.incoming.getTotalLength();transfer.outLength=transfer.outgoing.getTotalLength();
+      if(i===1){
+        const receipt=waveReceipts[i].getBoundingClientRect(),dx=receipt.right-box.left-18,dy=receipt.bottom-box.top-13;
+        duplicateRoute.setAttribute('d',`M ${sx} ${sy+10} C ${edge} ${sy+10}, ${edge} ${dy}, ${dx} ${dy}`);
+      }
+    });
+    waveGeometryReady=true;
+  }
+  function traceWavePath(path,length,progress){path.style.strokeDasharray=String(length);path.style.strokeDashoffset=String(length*(1-progress));}
+  function positionWavePacket(packet,path,length,progress,visible){
+    packet.dataset.flying=String(visible);if(!visible)return;
+    const point=path.getPointAtLength(length*progress);packet.setAttribute('transform',`translate(${point.x} ${point.y})`);
+  }
+  function setWaveText(target,value){if(target.textContent!==value)target.textContent=value;}
   function updateWaveMotion(){
     const time=reduced.matches?waveDuration:waveElapsed;
     const pct=(value)=>Math.max(0,Math.min(1,value));
-    const actorTravel=5+89*pct(time/20000);
+    // The diagram expands ready-only boundary processing; pending Futures never gate it.
+    const actorTravel=time<8000?5+35.6*pct(time/8000):time<10800?40.6:time<16000?40.6+35.6*pct((time-10800)/5200):time<18800?76.2:76.2+17.8*pct((time-18800)/1200);
     waveRails[0].style.setProperty('--travel',actorTravel+'%');
     waveRails[0].style.setProperty('--beam',actorTravel+'%');
     [4000,12000,23000].forEach((finish,i)=>{
@@ -69,9 +106,33 @@
       waveRails[i+1].style.setProperty('--beam',travel+'%');
       waveRails[i+1].style.setProperty('--work',progress*100+'%');
     });
-    // Only boundary-admitted evidence travels to the ledger; ready stays on its own rail.
-    waveLanes[1].querySelector('.wave-delivery').classList.toggle('is-delivering',!reduced.matches&&time>=8000&&time<9200);
-    waveLanes[2].querySelector('.wave-delivery').classList.toggle('is-delivering',!reduced.matches&&time>=16000&&time<17200);
+    if(!waveGeometryReady)updateWavePaths();
+    // Complete observations wait on their rail. Only later boundaries open admission.
+    waveTransfers.forEach((transfer,i)=>{
+      const elapsed=time-[8000,16000][i],incoming=pct(elapsed/1400),outgoing=pct((elapsed-1400)/1400);
+      const state=elapsed<0?'waiting':incoming<1?'receiving':outgoing<1?'returning':'admitted';
+      transfer.branch.dataset.state=state;waveReceipts[i].dataset.state=state;
+      setWaveText(waveReceipts[i].querySelector('.wave-receipt-name'),i===0?l('S₁ · catalog','S₁ · 目录'):l('S₂ · policy','S₂ · 政策'));
+      const boundary=i===0?'t+1':'t+2';
+      setWaveText(waveReceipts[i].querySelector('.wave-receipt-status'),state==='waiting'?l('Waiting for '+boundary,'等待 '+boundary):state==='receiving'?l('Evidence → ledger','证据 → ledger'):state==='returning'?l('Ledger → Actor','ledger → Actor'):l('In history · '+boundary,'已入历史 · '+boundary));
+      if(elapsed>=0){waveLanes[i+1].dataset.state=incoming<1?'receiving':'admitted';setWaveText(waveLanes[i+1].querySelector('.wave-status'),incoming<1?l('Admission at '+boundary,'在 '+boundary+' 接收中'):l('Admitted / reviewed','已接收 / 已审阅'));}
+      waveRails[0].querySelector(i===0?'.event-boundary-one':'.event-boundary-two').classList.toggle('is-receiving',elapsed>=1400&&elapsed<3300&&!reduced.matches);
+      if(waveGeometryReady){
+        traceWavePath(transfer.incoming,transfer.inLength,incoming);traceWavePath(transfer.outgoing,transfer.outLength,outgoing);
+        const returning=incoming===1,path=returning?transfer.outgoing:transfer.incoming,length=returning?transfer.outLength:transfer.inLength;
+        positionWavePacket(transfer.packet,path,length,returning?outgoing:incoming,!reduced.matches&&elapsed>=0&&elapsed<2800);
+      }else transfer.packet.dataset.flying='false';
+    });
+    const duplicateElapsed=time-16150,duplicateProgress=pct(duplicateElapsed/1650);
+    waveFlow.querySelector('.wave-flow-duplicate').dataset.state=duplicateElapsed<0?'waiting':duplicateProgress<1?'reviewing':'suppressed';
+    if(waveGeometryReady){const length=duplicateRoute.getTotalLength();traceWavePath(duplicateRoute,length,duplicateProgress);positionWavePacket(duplicatePacket,duplicateRoute,length,duplicateProgress,!reduced.matches&&duplicateElapsed>=0&&duplicateElapsed<2450);}else duplicatePacket.dataset.flying='false';
+    const catalogIn=time>=9400,policyIn=time>=17400,duplicateReviewed=time>=17800;
+    document.getElementById('wave-empty').hidden=catalogIn;
+    document.getElementById('wave-catalog').hidden=!catalogIn;
+    document.getElementById('wave-policy').hidden=!policyIn;
+    document.getElementById('wave-duplicate').hidden=!duplicateReviewed;
+    const suppressed=document.getElementById('wave-suppressed');suppressed.hidden=!duplicateReviewed;setWaveText(suppressed,l('catalog × suppressed','目录重复 × 已抑制'));
+    setWaveText(document.getElementById('wave-actor-status'),time>=20000?l('Task complete · authoritative Actor','任务完成 · 权威 Actor'):time>=8000&&time<10800?l('t+1 · admitting ready evidence','t+1 · 接收已完成证据'):time>=16000&&time<18800?l('t+2 · admitting ready evidence','t+2 · 接收已完成证据'):l('One continuing mainline','一条持续推进的主线'));
   }
   function renderDemo(){
     demoStep=reduced.matches?5:Math.min(5,Math.floor(waveElapsed/phaseDuration));
@@ -87,10 +148,9 @@
       lane.querySelector('.wave-work').textContent=l(...names[i]);
       lane.querySelector('.wave-status').textContent=[l('Pending Future','未完成 Future'),l('Ready · retained','完成 · 待接收'),l('Admitted / reviewed','已接收 / 已审阅'),l('Cancelled · cleanup','已取消 · 清理')][state];
     });
-    document.getElementById('wave-empty').hidden=current.ledger>0;
     document.getElementById('wave-empty').textContent=l('No older ready observation admitted yet.','尚未接收早先已完成的观察。');
     ['wave-catalog','wave-policy','wave-duplicate'].forEach((id,i)=>{
-      const entry=document.getElementById(id);entry.textContent=l(...waveRecords[i]);entry.hidden=current.ledger<(i===0?1:2);
+      const entry=document.getElementById(id);entry.textContent=l(...waveRecords[i]);
     });
     const transcript=document.getElementById('wave-transcript-list');
     [...transcript.children].forEach((item,i)=>{item.querySelector('h4').textContent=l(...demo[i].title);item.querySelector('p').textContent=l(...demo[i].description);});
@@ -101,7 +161,11 @@
     waveFrameId=undefined;waveLastTime=undefined;waveFilm.dataset.running='false';
   }
   function resetWave(){stopPlay();waveElapsed=0;renderDemo();}
-  function waveIsActive(){return chronicle.open&&!document.getElementById('demo').hidden&&waveVisible&&!document.hidden&&!reduced.matches&&waveElapsed<waveDuration;}
+  function waveIsActive(){
+    if(!chronicle.open||document.getElementById('demo').hidden||!waveVisible||document.hidden||reduced.matches||waveElapsed>=waveDuration)return false;
+    const actor=waveRails[0].getBoundingClientRect(),head=chronicle.querySelector('.chronicle-head').getBoundingClientRect();
+    return actor.top+parseFloat(getComputedStyle(waveRails[0].querySelector('.wave-orb')).top)>head.bottom+4;
+  }
   function waveFrame(time){
     waveFrameId=undefined;
     if(!waveIsActive()){stopPlay();return;}
@@ -121,6 +185,8 @@
     language=next;document.documentElement.lang=language==='zh'?'zh-Hans':'en';document.body.dataset.language=language;
     document.querySelectorAll('[data-i18n]').forEach(el=>{const value=copies?.[language]?.[el.dataset.i18n];if(typeof value==='string')el.textContent=value;});
     langButton.textContent=language==='en'?'中文':'English';langButton.hidden=false;langButton.setAttribute('aria-label',language==='en'?'Switch to Chinese':'切换为英文');
+    const mathLabels={domains:['Disjoint tool domain','互斥工具域'],complement:['Remaining legal domain','剩余合法参数域'],ledger:['Ready evidence admission','已完成证据接收']};
+    document.querySelectorAll('.math-equation').forEach(row=>{const label=mathLabels[row.dataset.formula];if(label)row.querySelector('.math-expression').setAttribute('aria-label',l(...label));});
     if(persist)try{localStorage.setItem(languageKey,language);}catch{}
     renderTables();renderDemo();syncWave(); if (window.requestOdysseyFrame) window.requestOdysseyFrame();
   }
@@ -322,7 +388,13 @@
     archiveSections.forEach(section=>section.hidden=section.id!==id);
     document.querySelectorAll('[data-archive-target]').forEach(b=>b.setAttribute('aria-current',b.dataset.archiveTarget===id?'page':'false'));
     if(tab){const button=document.getElementById('tab-'+tab);if(button)activateTab(button);}
-    chronicle.scrollTop=0;if(restart)resetWave();else renderDemo();syncWave();
+    chronicle.scrollTop=0;if(restart){resetWave();if(chronicle.open)requestAnimationFrame(frameWaveView);}else renderDemo();syncWave();
+  }
+  function frameWaveView(){
+    if(!chronicle.open||document.getElementById('demo').hidden)return;
+    const head=chronicle.querySelector('.chronicle-head').getBoundingClientRect(),caption=waveFilm.querySelector('.wave-caption').getBoundingClientRect();
+    chronicle.scrollTop=Math.max(0,chronicle.scrollTop+caption.top-head.bottom-24);
+    updateWavePaths();syncWave();
   }
   function updateChronicleContext(){const context=document.getElementById('chronicle-context');context.hidden=currentScene===0;context.textContent=['I','II','III','IV','V','VI','VII','VIII'][currentScene]+' · '+(copies?.[language]?.['sceneTitle'+currentScene]||'');}
   function openArchive(id,opener,tab,push=true){
@@ -333,7 +405,7 @@
     arrivedScene=currentScene;promptedScene=currentScene;
     archiveOpener=opener||beats[currentScene].querySelector('[data-open-archive]')||beats[currentScene].querySelector('h1,h2');
     if(!chronicle.open)returnHash='#scene-'+scenes[currentScene].id;
-    chooseArchive(id,tab);updateChronicleContext();if(!chronicle.open)chronicle.showModal();syncModalState();syncWave();
+    chooseArchive(id,tab);updateChronicleContext();if(!chronicle.open)chronicle.showModal();syncModalState();if(id==='demo')frameWaveView();syncWave();
     if(push)history.pushState({archive:id},'', '#'+id);
   }
   document.querySelectorAll('[data-open-archive]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();openArchive(a.dataset.openArchive,a,a.dataset.resultTab);}));
@@ -350,8 +422,12 @@
   dialog.querySelector('.close-lightbox').addEventListener('click',()=>dialog.close());dialog.addEventListener('close',()=>{resetImageRecovery(image,null);syncModalState();zoomOpener?.focus({preventScroll:true});});
   function handleHash(){const id=location.hash.slice(1),legacy={myth:'summons',philosophy:'horizon',main:'summons'};if(archiveIds.includes(id)){openArchive(id,null,null,false);return;}if(chronicle.open)chronicle.close();if(legacy[id])document.getElementById('scene-'+legacy[id]).scrollIntoView({behavior:'instant'});requestFrame();}
   window.addEventListener('hashchange',handleHash);window.addEventListener('popstate',handleHash);
-  const waveObserver=new IntersectionObserver(entries=>{waveVisible=entries[0].isIntersecting&&entries[0].intersectionRatio>=.12;syncWave();},{root:chronicle,threshold:[0,.12]});
-  waveObserver.observe(waveFilm.querySelector('.wave-reel'));
+  const waveViewParts=new Map();
+  const waveObserver=new IntersectionObserver(entries=>{entries.forEach(entry=>waveViewParts.set(entry.target,entry.isIntersecting&&entry.intersectionRatio>=.6));waveVisible=!!waveViewParts.get(waveIntake)&&!!waveViewParts.get(waveLanes[1]);updateWavePaths();syncWave();},{root:chronicle,threshold:[0,.6]});
+  waveObserver.observe(waveIntake);waveObserver.observe(waveLanes[1]);chronicle.addEventListener('scroll',syncWave,{passive:true});
+  const waveLayoutObserver=new ResizeObserver(()=>{updateWavePaths();updateWaveMotion();});waveLayoutObserver.observe(waveReel);
+  const mathLayoutObserver=new ResizeObserver(entries=>entries.forEach(({target})=>{target.parentElement.querySelector('.math-scroll-note').hidden=target.scrollWidth<=target.clientWidth+1;}));
+  document.querySelectorAll('.math-expression').forEach(expression=>mathLayoutObserver.observe(expression));
   reduced.addEventListener?.('change',()=>{stopPlay();waveElapsed=0;renderDemo();syncWave();});
   document.querySelector('.wave-transcript').open=false;
   document.documentElement.classList.remove('no-js');document.documentElement.classList.add('enhanced');

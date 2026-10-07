@@ -190,10 +190,12 @@ window.PERSEUS_COPY = {
     "returnHome": "Academic home ↗",
     "chronicleTitle": "The research chronicle",
     "backJourney": "Return to the journey ×",
+    "equationScroll": "Swipe to read the full equation →",
+    "waveHistoryLabel": "Actor history",
     "waveFinish": "Finish",
     "waveAccessibleTitle": "One asynchronous exploration wave",
     "waveAccessibleSummary": "The Actor continues while three independent acquisitions run. Ready observations enter only at later Actor boundaries. The Actor finishes and cancels the remaining Future. A complete six-stage transcript follows.",
-    "waveNote": "24 seconds of narrative motion · not execution time. Ready is not admitted; only the Actor commits.",
+    "waveNote": "24 seconds of narrative motion · not execution time. Boundary admission is expanded for visibility; pending Futures never block it. Only the Actor commits.",
     "waveTranscript": "Read the complete wave"
   },
   "zh": {
@@ -387,10 +389,12 @@ window.PERSEUS_COPY = {
     "returnHome": "学术主页 ↗",
     "chronicleTitle": "研究卷轴",
     "backJourney": "返回旅程 ×",
+    "equationScroll": "横向滑动查看完整公式 →",
+    "waveHistoryLabel": "Actor 历史",
     "waveFinish": "完成",
     "waveAccessibleTitle": "一个异步探索波次",
     "waveAccessibleSummary": "Actor 继续前行，三条独立采集同时运行。已完成的观察仅在后续 Actor 边界进入证据账本。最后由 Actor 完成任务并取消剩余 Future。下方附完整六阶段说明。",
-    "waveNote": "24 秒为叙事编排，并非执行耗时。完成不等于接收；只有 Actor 提交。",
+    "waveNote": "24 秒为叙事编排，并非执行耗时。接收边界被展开呈现，未完成 Future 不形成等待屏障；只有 Actor 提交。",
     "waveTranscript": "阅读完整波次说明"
   }
 };
