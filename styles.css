@@ -227,3 +227,12 @@ main > section.hero { border-top: 0; padding-top: 0; }
 .research-links a::after, .publication-links a::after { content: none; }
 main .site-footer { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 14px; max-width: none; margin: 0; padding: 22px 0 0; border-top: 1px solid var(--line); }
 @media (max-width: 560px) { main .site-footer { font-size: 10px; gap: 8px; } .sidebar-location { margin: 10px 0 0; } }
+
+.profile-name span { display: block; margin-top: 5px; font-size: 16px; font-weight: 400; color: var(--muted); }
+.portrait-frame img { object-position: center 28%; }
+.education-list { display: grid; gap: 22px; }
+.education-entry { display: grid; grid-template-columns: 105px 1fr; gap: 20px; }
+.education-entry > span { color: var(--muted); font-size: 13px; padding-top: 3px; }
+.education-entry h3 { margin: 0 0 4px; font-size: 16px; }
+.education-entry p { margin: 0; color: var(--muted); font-size: 14px; }
+@media (max-width: 520px) { .education-entry { grid-template-columns: 85px 1fr; gap: 12px; } }

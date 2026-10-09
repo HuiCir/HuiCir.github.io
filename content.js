@@ -1,5 +1,10 @@
 window.SITE_COPY = {
   en: {
+    downloadCV: 'Curriculum vitae ↗', submissionsTitle: 'Selected submissions',
+    webprogramStatus: '· Under review · Fourth author',
+    webprogramSummary: 'Evaluating whether coding agents can reconstruct executable applications from black-box interaction, with checks spanning interfaces, services, and persistent state.',
+    educationTitle: 'Education', phdDegree: 'Ph.D. in Artificial Intelligence (in progress)', mastersDegree: 'Master’s in Data Science', bachelorsDegree: 'Bachelor’s in Electronic Information', nju: 'Nanjing University', whu: 'Wuhan University',
+
     projectSite: 'Project site ↗', skip: 'Skip to content', navResearch: 'Research', navPapers: 'Publications', navAbout: 'About',
     role: 'Ph.D. candidate', affiliation: 'Nanjing University', location: 'Nanjing, China',
     profileNote: 'Language agents\nMulti-agent systems\nGraph learning',
@@ -22,6 +27,11 @@ window.SITE_COPY = {
     updated: 'Updated October 2026', backTop: 'Back to top ↑'
   },
   zh: {
+    downloadCV: '学术简历 ↗', submissionsTitle: '代表性投稿',
+    webprogramStatus: '· 在审 · 第四作者',
+    webprogramSummary: '评估编程智能体能否通过黑盒交互重建可执行应用，验证覆盖界面、服务与持久化状态。',
+    educationTitle: '教育经历', phdDegree: '人工智能 · 博士在读', mastersDegree: '数据科学 · 硕士', bachelorsDegree: '电子信息 · 本科', nju: '南京大学', whu: '武汉大学',
+
     projectSite: '项目主页 ↗', skip: '跳转到正文', navResearch: '研究', navPapers: '发表论文', navAbout: '关于',
     role: '博士候选人', affiliation: '南京大学', location: '中国 · 南京',
     profileNote: '语言智能体\n多智能体系统\n图学习',

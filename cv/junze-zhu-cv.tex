@@ -1,0 +1,83 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[margin=1.55cm]{geometry}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{titlesec}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fontspec}
+\definecolor{ink}{HTML}{17202A}
+\definecolor{muted}{HTML}{5E6B75}
+\definecolor{accent}{HTML}{1D6B66}
+\definecolor{rule}{HTML}{D9E0DD}
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0pt}
+\setlist[itemize]{leftmargin=1.2em,itemsep=1pt,topsep=2pt,parsep=0pt}
+\titleformat{\section}{\large\bfseries\color{accent}}{}{0pt}{}[\vspace{2pt}\color{rule}\titlerule]
+\titlespacing*{\section}{0pt}{10pt}{5pt}
+\newcommand{\entry}[4]{%
+  \begin{tabularx}{\textwidth}{@{}p{2.45cm}@{\hspace{0.28cm}}X@{}}
+  \textcolor{muted}{#1} & \textbf{#2}\\[-1pt]
+  & #3\\[-1pt]
+  & {\small\textcolor{muted}{#4}}
+  \end{tabularx}\vspace{4pt}}
+\newcommand{\paper}[4]{%
+  \begin{tabularx}{\textwidth}{@{}p{1cm}@{\hspace{0.15cm}}X@{}}
+  \textcolor{accent}{#1} & \textbf{#2}\\[-1pt]
+  & #3\\[-1pt]
+  & {\small\textcolor{muted}{#4}}
+  \end{tabularx}\vspace{5pt}}
+\begin{document}
+\begin{minipage}[t]{0.78\textwidth}
+  {\fontsize{26}{29}\selectfont\bfseries\color{ink} Junze Zhu}\par
+  \vspace{7pt}{\color{accent}\bfseries Ph.D. Candidate \quad | \quad Artificial Intelligence, Nanjing University}\par
+  \vspace{6pt}\small
+  \href{mailto:aminataconde675@gmail.com}{aminataconde675@gmail.com}\quad|\quad
+  \href{https://huicir.github.io/}{huicir.github.io}\quad|\quad
+  \href{https://scholar.google.com/citations?user=-XbdENoAAAAJ\&hl=en}{Google Scholar}\quad|\quad
+  \href{https://github.com/HuiCir}{GitHub}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.18\textwidth}
+  \vspace{-2pt}\IfFileExists{profile.jpg}{\includegraphics[width=2.3cm,height=2.8cm,keepaspectratio]{profile.jpg}}{}
+\end{minipage}
+
+\section{Research interests}
+Language agents, multi-agent systems, speculative and asynchronous execution, harness-aligned policy learning, knowledge graphs, and recommendation.
+
+\section{Education}
+\entry{2025--2029 (expected)}{Ph.D. Candidate in Artificial Intelligence}{Nanjing University}{Focus: Agent Systems and Swarm Intelligence}
+\entry{2022--2025}{Master's in Data Science}{Wuhan University}{Focus: Knowledge-Enhanced Intelligent Systems}
+\entry{2018--2025}{Bachelor's in Electronic Information}{Wuhan University}{Focus: Multimodal Fusion Perception}
+
+\section{Selected publications}
+\paper{2026}{Recognize Your Orchestrator: An Entropy Dynamics Perspective for LLM Multi-Agent Systems}{Junze Zhu, Weihao Chen, Xuanwang Zhang, Zhen Wu, Xinyu Dai. \textit{ICML 2026}, PMLR 306:166844--166869. \href{https://proceedings.mlr.press/v306/zhu26g.html}{Paper}.}{Mean-field entropy dynamics for understanding instability in centralized language-agent orchestration.}
+\paper{2025}{Knowledge Graph Preference Contrastive Learning for Recommendation}{Junze Zhu, Zhongyi Hu, Fan Zhang. \textit{Learning on Graphs Conference}, PMLR 269:18:1--18:15. \href{https://proceedings.mlr.press/v269/zhu25a.html}{Paper} / \href{https://github.com/HuiCir/KPCL}{Code}.}{Preference-aware contrastive learning and rationale attention for knowledge-aware recommendation.}
+\paper{2026}{WebProgramBench: Can Coding Agents Reconstruct Live Applications from Scratch via Black-Box Interaction?}{Xuanwang Zhang, Yuteng Han, Xinyu Liu, \textbf{Junze Zhu}, et al. \textit{ICLR 2027 submission}, under review; fourth author. \href{https://openreview.net/forum?id=RKsIvqqtT8}{OpenReview}.}{A benchmark for executable reconstruction of live applications through black-box interaction.}
+
+\section{Manuscripts and research projects}
+\begin{itemize}
+  \item \textbf{Anchoring and Adjustment: A Cognitive Refinement Framework for Trustworthy Retrieval Augmentation}. Working manuscript, 2026.
+  \item \textbf{Perseus: Non-Blocking Parallel Exploration with a Speculative Swarm}. Under review. An asynchronous agent swarm architecture that expands inference-time exploration while an authoritative Actor retains task control. \href{https://huicir.github.io/Perseus/}{Project site}.
+  \item \textbf{Harness Policy Distillation: Aligning Agent Policies with Runtime Semantics}. Under review. A policy learning framework that distills verified actions and runtime control-document views into a harness-compatible agent policy.
+\end{itemize}
+
+\section{Selected systems work}
+\begin{itemize}
+  \item \textbf{Open Crowd} -- skill and CLI management for complex task orchestration with agent swarms.
+  \item \textbf{Token-Never-Sleeps} -- long-horizon agent swarm task management and external-loop execution; published as an npm package.
+\end{itemize}
+
+\section{Links}
+\small
+\href{https://huicir.github.io/}{Academic homepage}\quad|\quad
+\href{https://github.com/HuiCir}{GitHub}\quad|\quad
+\href{https://scholar.google.com/citations?user=-XbdENoAAAAJ\&hl=en}{Google Scholar}\quad|\quad
+\href{https://openreview.net/forum?id=RKsIvqqtT8}{WebProgramBench on OpenReview}
+
+\vfill
+\begin{center}\scriptsize\color{muted}Last updated October 2026\end{center}
+\end{document}
