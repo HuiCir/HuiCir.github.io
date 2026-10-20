@@ -1,13 +1,13 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ABench 架构能力基准</title>
+<title>ABench: Architecture Ability Benchmark</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;900&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="assets/style.css?v=62bdebb">
+<link rel="stylesheet" href="assets/style.css?v=std21">
 <script>
   try { const t = localStorage.getItem("abench-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
 </script>
@@ -15,66 +15,157 @@
 <body>
 <header class="topbar">
   <div class="topbar-inner">
-    <a class="wordmark" href="#top" aria-label="ABench 首页"><img src="assets/logo.png" alt="" aria-hidden="true"> <span>ABench</span><span class="ver">v2026.07</span></a>
-    <nav class="nav" aria-label="页面导航">
-      <a href="#flow">构建流程</a>
-      <a href="#scoring">评价模式</a>
-      <a href="#discovery">局部发现</a>
-      <a href="#modes">验证与资源</a>
+    <a class="wordmark" href="#top" aria-label="ABench home"><img src="assets/logo.png" alt="" aria-hidden="true"> <span>ABench</span><span class="ver">v2.1 · OJ</span></a>
+    <nav class="nav" aria-label="Page navigation">
+      <a href="#flow">Build flow</a>
+      <a href="#oj">OJ evaluation</a>
+      <a href="#standard">Standard cases</a>
+      <a href="#report">Design report</a>
+      <a href="#scoring">Evaluation modes</a>
+      <a href="#discovery">Local discovery</a>
+      <a href="#modes">Verification and resources</a>
       <a href="#cases">Case</a>
-      <a href="#scale">规模</a>
+      <a href="#scale">Scale</a>
     </nav>
-    <button class="theme-toggle" id="themeToggle" type="button" aria-label="切换深浅色">
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle light/dark">
       <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 7a5 5 0 0 1 0 10z" fill="currentColor"/></svg>
     </button>
   </div>
 </header>
 
 <main id="top">
-  <!-- ============ 英雄区：引用图从锚点生长到方案 ============ -->
+  <!-- ============ Hero: citation graph growing from the anchor to the method ============ -->
   <section class="hero" aria-labelledby="heroTitle">
     <div class="hero-text">
-      <h1 id="heroTitle"><span class="ln">考的是设计架构，</span><span class="ln">不是复现论文</span></h1>
+      <h1 id="heroTitle"><span class="ln">It tests architecture design,</span><span class="ln">not paper reproduction</span></h1>
       <div class="hero-side">
-      <p class="lede">ABench 让 agent 从一篇经典论文出发，检索截止日前的研究，归纳后设计出更好、且与现有方案不同的架构；再在统一的缩减验证下，按 SOTA 幅度、方案差异度、参考含金量和局部发现综合评分。</p>
+      <p class="lede">ABench asks an agent to start from a classic paper, retrieve research from before the cutoff, synthesize it, and design an architecture that is better than and different from existing ones. Evaluation works like an online judge: the agent gets only the task statement, interface and public training data, and submits code, weights and a design report that explains only principles; the test set stays outside the sandbox, the judge loads the submission to compute metrics, and the overall score combines SOTA margin, method divergence, reference quality and local discovery.</p>
       <div class="hero-actions">
-        <a class="btn primary" href="#flow">看一个 case 怎样跑完</a>
-        <a class="btn" href="#cases" id="heroCasesBtn">浏览全部 case</a>
+        <a class="btn primary" href="#flow">Watch one case run end to end</a>
+        <a class="btn" href="#cases" id="heroCasesBtn">Browse all cases</a>
       </div>
       <dl class="hero-facts" id="heroFacts"></dl>
       </div>
     </div>
-    <figure class="hero-graph" aria-label="B-OPT-001 的论文邻域：从锚点 Adam 到示例方案 RankGate">
+    <figure class="hero-graph" aria-label="Paper neighborhood of B-OPT-001: from the anchor Adam to the example method RankGate">
       <svg id="heroSvg" viewBox="0 0 1200 530" role="img"></svg>
       <figcaption class="graph-legend" id="heroLegend"></figcaption>
-      <button class="replay" id="heroReplay" type="button">重播</button>
+      <button class="replay" id="heroReplay" type="button">Replay</button>
     </figure>
   </section>
 
-  <!-- ============ 构建流程：S0–S6 ============ -->
+  <!-- ============ Build flow: S0–S6 ============ -->
   <section class="block" id="flow" aria-labelledby="flowTitle">
     <div class="block-head">
-      <h2 id="flowTitle">一个 case 从下发到出分</h2>
-      <p>以已构建的 B-OPT-001（锚点 Adam，赛道：优化器）为例。点任一步查看，或按「自动播放」走完全程。</p>
+      <h2 id="flowTitle">One case from issue to score</h2>
+      <p>Using B-OPT-001 (anchor Adam, track: optimizers) as the example. S0–S5 happen inside the sandbox, where the agent sees only its own view; from S6 on, the judge works outside the sandbox. Click any step to inspect it, or press "Autoplay" to run the whole flow.</p>
     </div>
     <div class="stepper">
-      <ol class="steps" id="steps" role="tablist" aria-label="任务流程"></ol>
+      <ol class="steps" id="steps" role="tablist" aria-label="Task flow"></ol>
       <div class="step-stage" id="stepStage" role="tabpanel" aria-live="polite"></div>
       <div class="step-controls">
-        <button class="btn small" id="stepPrev" type="button">上一步</button>
-        <button class="btn small primary" id="stepPlay" type="button">自动播放</button>
-        <button class="btn small" id="stepNext" type="button">下一步</button>
+        <button class="btn small" id="stepPrev" type="button">Previous</button>
+        <button class="btn small primary" id="stepPlay" type="button">Autoplay</button>
+        <button class="btn small" id="stepNext" type="button">Next</button>
       </div>
     </div>
   </section>
 
-  <!-- ============ 评价模式：三个提交对比 ============ -->
+  <!-- ============ OJ evaluation: two views ============ -->
+  <section class="block" id="oj" aria-labelledby="ojTitle">
+    <div class="block-head">
+      <h2 id="ojTitle">OJ evaluation: the test set never enters the sandbox</h2>
+      <p>The agent view is built from an allowlist: task statement, interface, report templates and public training data, all read-only. Hidden settings, reference methods and scoring weights are not in it. Only after the agent finishes and the workspace is deleted does the judge decrypt the hidden set and load the submission: model code and the checkpoint the agent trained, or, where the training program itself is measured, the code it trains from scratch.</p>
+    </div>
+    <div class="oj-split">
+      <article class="panel oj-side" aria-labelledby="ojAgentH">
+        <header class="panel-head"><h3 id="ojAgentH">Agent view <span class="tag plain">read-only</span></h3><div class="seg" id="ojCaseSwitch" role="tablist" aria-label="Choose a case"></div></header>
+        <ul class="tree" id="ojAgentTree"></ul>
+        <div class="envs" id="ojEnv"></div>
+      </article>
+      <div class="oj-wall" aria-hidden="true"><span>sandbox boundary</span></div>
+      <article class="panel oj-side judge-side" aria-labelledby="ojJudgeH">
+        <header class="panel-head"><h3 id="ojJudgeH">Judge <span class="tag red">outside the sandbox</span></h3></header>
+        <ul class="tree" id="ojJudgeTree"></ul>
+        <p class="panel-note">After the view is built it is scanned again: the run aborts if a judge-side file name appears or the statement contains judge-side terms (reference pool, scoring weights, hidden settings…) not allowed for that case.</p>
+      </article>
+    </div>
+
+    <article class="panel">
+      <header class="panel-head"><h3>The full path of one run</h3><div class="seg" id="ojScenario" role="tablist" aria-label="Choose a scenario"></div></header>
+      <div class="chart-wrap"><svg id="ojPipe" viewBox="0 0 1120 215" role="img" aria-label="Run path: build view, run agent, collect, format check, decrypt hidden set, prediction subprocess, compute metrics, write result"></svg></div>
+      <div class="oj-verdict" id="ojVerdict" aria-live="polite"></div>
+    </article>
+
+    <div class="oj-grid">
+      <article class="panel"><h3>Three kinds of submission</h3><table class="mini" id="ojKinds"></table></article>
+      <article class="panel"><h3>Run modes and isolation</h3>
+        <table class="mini"><thead><tr><th>Run</th><th>Isolation</th><th>Result</th></tr></thead><tbody>
+          <tr><td><span class="tag plain">smoke</span></td><td>host_soft: same system user, read-only view, environment-variable allowlist</td><td>Checks only process and format, never decrypts the hidden set, recorded as <span class="mono">smoke_unscored</span>, unscored</td></tr>
+          <tr><td><span class="tag">benchmark</span></td><td>wrapper: separate user or container, no network, only the view and workspace mounted</td><td>The judge runs, recorded as <span class="mono">judge_real</span>; only such records can be scored</td></tr>
+          <tr><td><span class="tag red">benchmark</span></td><td>no wrapper</td><td>The runner refuses to start</td></tr>
+        </tbody></table>
+        <p class="panel-note">The key must be outside the repository, with permissions 0600, not a symlink, and never in the agent's environment variables.</p>
+      </article>
+    </div>
+    <p class="provenance" id="ojProv"></p>
+  </section>
+
+  <!-- ============ Standard cases: evaluation modes, workflow, launch path ============ -->
+  <section class="block" id="standard" aria-labelledby="stdTitle">
+    <div class="block-head">
+      <h2 id="stdTitle">Standard cases: the agent trains, the evaluator only evaluates</h2>
+      <p id="stdLede">Every track has at least one standard case built to task statement v2.1. The agent gets compute in the sandbox to explore, train and check its own work with the evaluator's own pipeline; what the evaluator then does depends on what the case measures.</p>
+    </div>
+    <div class="std-modes" id="stdModes"></div>
+    <article class="panel">
+      <header class="panel-head"><h3>Workflow required by every standard task statement</h3></header>
+      <ol class="std-flow" id="stdFlow"></ol>
+      <p class="panel-note">The paper search is offline: titles and abstracts of arXiv papers first submitted before the cutoff (2026-07-01), from the CC0 arXiv metadata; every call is written to a hash-chained log that is kept with the run. A design report without the list <span class="mono">&lt;ol id="changes"&gt;</span>, or with a change that has no code location, fails the format check.</p>
+    </article>
+    <article class="panel">
+      <header class="panel-head"><h3>The 20 standard cases</h3><div class="seg" id="stdFilter" role="tablist" aria-label="Filter by evaluation mode"></div></header>
+      <div class="std-table-wrap"><table class="mini std-table" id="stdTable"></table></div>
+      <p class="panel-note" id="stdNote"></p>
+    </article>
+    <article class="panel">
+      <header class="panel-head"><h3>Launch path, checked step by step <span class="tag plain">TC-FT-001</span></h3></header>
+      <ol class="std-launch" id="stdLaunch"></ol>
+      <p class="panel-note" id="stdLaunchNote"></p>
+    </article>
+  </section>
+
+  <!-- ============ Design report ============ -->
+  <section class="block" id="report" aria-labelledby="reportTitle">
+    <div class="block-head">
+      <h2 id="reportTitle">Design report: arXiv layout, principles only</h2>
+      <p>The report follows the LaTeXML structure of arxiv.org/html: table of contents on the left, numbered equations, algorithm boxes, theorems and proofs, bibliography. It explains only why the method is designed this way, how it differs from existing methods and under which conditions it holds; all experiments and numbers are left to the judge.</p>
+    </div>
+    <div class="rep-grid">
+      <article class="panel rep-frame">
+        <header class="panel-head"><div class="seg" id="repSwitch" role="tablist" aria-label="Choose a report"></div><a class="btn small" id="repOpen" href="reports/B-OPT-001-rankgate.html" target="_blank" rel="noopener">Open in new window</a></header>
+        <div class="browser"><div class="bar"><i></i><i></i><i></i><span class="url mono" id="repUrl">submission/report/index.html</span></div>
+          <iframe id="repFrame" title="Design report preview" loading="lazy" src="reports/B-OPT-001-rankgate.html"></iframe></div>
+      </article>
+      <article class="panel rep-rules">
+        <h3>Automatic checks at submission</h3>
+        <div class="rr"><span class="k">Required anchors</span><div class="chips" id="repAnchors"></div></div>
+        <div class="rr"><span class="k">LaTeXML structure</span><div class="chips" id="repClasses"></div></div>
+        <div class="rr"><span class="k">Forbidden sections</span><div class="chips"><span class="tag red strike">Experiments</span><span class="tag red strike">Results</span><span class="tag red strike">Ablation</span><span class="tag red strike">Evaluation</span><span class="tag red strike">Benchmark</span><span class="tag red strike">Metrics</span><span class="tag red strike">Leaderboard</span></div></div>
+        <div class="rr"><span class="k">Offline and self-contained</span><p>No script, link, iframe, object or embed, and no references to external resources.</p></div>
+        <div class="rr"><span class="k">References</span><p><span class="mono">references.yaml</span> corresponds one to one with the report's <span class="mono">bib.&lt;id&gt;</span>, and each entry states what was borrowed and where it is in the code; reference quality is computed by the judge from venue tier and citations.</p></div>
+        <p class="panel-note" id="repLive">Reading structure…</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============ Evaluation modes: three submissions compared ============ -->
   <section class="block" id="scoring" aria-labelledby="scoringTitle">
     <div class="block-head">
-      <h2 id="scoringTitle">评价模式：三道门槛，四个分量</h2>
-      <p>同一个 case 的三个提交走同一套评分。切换提交，看它们分别在哪里得分、在哪里被拦下。</p>
+      <h2 id="scoringTitle">Evaluation modes: three thresholds, four components</h2>
+      <p>All scoring happens outside the sandbox. The task statement publishes the metrics, thresholds and score components, but not the weights or the reference pool. The three submissions of one case go through the same scoring; switch between them to see where each scores and where it is stopped.</p>
     </div>
-    <div class="sub-switch" id="subSwitch" role="tablist" aria-label="选择提交"></div>
+    <div class="sub-switch" id="subSwitch" role="tablist" aria-label="Choose a submission"></div>
 
     <div class="score-board">
       <div class="formula" id="formula" aria-live="polite"></div>
@@ -84,129 +175,131 @@
     <div class="score-grid">
       <article class="panel wide">
         <header class="panel-head">
-          <h3>SOTA 幅度 M：对参考包络线的有效加速比</h3>
-          <div class="seg" id="settingSwitch" role="tablist" aria-label="评测设置"></div>
+          <h3>SOTA margin M: effective speedup against the reference envelope</h3>
+          <div class="seg" id="settingSwitch" role="tablist" aria-label="Evaluation setting"></div>
         </header>
-        <div class="chart-wrap"><svg id="envChart" viewBox="0 0 960 380" role="img" aria-label="参考方案的预算-最终损失曲线与提交点"></svg></div>
+        <div class="chart-wrap"><svg id="envChart" viewBox="0 0 960 380" role="img" aria-label="Budget–final loss curves of the reference methods and the submission points"></svg></div>
         <p class="panel-note" id="envNote"></p>
       </article>
       <article class="panel">
-        <header class="panel-head"><h3>差异度 D：固定梯度流上的行为相似度</h3></header>
+        <header class="panel-head"><h3>Divergence D: behavioral similarity on a fixed gradient stream</h3></header>
         <div id="divBars" class="bars"></div>
         <p class="panel-note" id="divNote"></p>
       </article>
       <article class="panel">
-        <header class="panel-head"><h3>参考含金量 Q：论文权重 × 使用度</h3></header>
+        <header class="panel-head"><h3>Reference quality Q: paper weight × usage</h3></header>
         <div id="qBars" class="bars"></div>
         <p class="panel-note" id="qNote"></p>
       </article>
       <article class="panel wide">
-        <header class="panel-head"><h3>局部发现 X：逐条消融</h3></header>
+        <header class="panel-head"><h3>Local discovery X: per-claim ablation</h3></header>
         <div id="xCards" class="x-cards"></div>
       </article>
     </div>
-    <p class="provenance">训练损失与评审输出为模拟值；行为探针、代码差异、论文权重和评分逻辑为真实计算。</p>
+    <p class="provenance">Only the training losses and judge outputs in the historical demo of B-OPT-001 are simulated; no results were generated for the new cases, and formal scoring must use a real runner.</p>
   </section>
 
-  <!-- ============ 局部发现：Sinkhorn-Knopp ============ -->
+  <!-- ============ Local discovery: Sinkhorn-Knopp ============ -->
   <section class="block" id="discovery" aria-labelledby="discTitle">
     <div class="block-head">
-      <h2 id="discTitle">局部发现：把已知结果用在新问题上</h2>
-      <p>构件可以不是原创。参照 DeepSeek mHC：Hyper-Connections 的残差混合矩阵破坏恒等映射，引入 1967 年的 Sinkhorn-Knopp，把它投影成行列和都为 1 的双随机矩阵。下面就是这个投影本身。</p>
+      <h2 id="discTitle">Local discovery: a known result applied to a new problem</h2>
+      <p>The building block need not be original. As in DeepSeek mHC: the residual mixing matrix of Hyper-Connections breaks the identity mapping, so the 1967 Sinkhorn–Knopp algorithm is brought in to project it onto a doubly stochastic matrix whose rows and columns each sum to 1. Below is that projection itself.</p>
     </div>
     <div class="disc-grid">
       <div class="panel sinkhorn">
         <div class="sk-wrap">
-          <svg id="skSvg" viewBox="0 0 420 380" role="img" aria-label="Sinkhorn-Knopp 迭代：交替做行归一化和列归一化"></svg>
+          <svg id="skSvg" viewBox="0 0 420 380" role="img" aria-label="Sinkhorn–Knopp iteration: alternating row and column normalization"></svg>
         </div>
         <div class="sk-readout">
-          <div><span class="k">迭代</span><span class="v mono" id="skIter">0</span></div>
-          <div><span class="k">当前操作</span><span class="v" id="skOp">原始矩阵</span></div>
-          <div><span class="k">行列和误差</span><span class="v mono" id="skErr">—</span></div>
+          <div><span class="k">Iteration</span><span class="v mono" id="skIter">0</span></div>
+          <div><span class="k">Current operation</span><span class="v" id="skOp">original matrix</span></div>
+          <div><span class="k">Row/column sum error</span><span class="v mono" id="skErr">—</span></div>
         </div>
         <div class="step-controls">
-          <button class="btn small primary" id="skPlay" type="button">播放</button>
-          <button class="btn small" id="skStep" type="button">单步</button>
-          <button class="btn small" id="skReset" type="button">重置</button>
+          <button class="btn small primary" id="skPlay" type="button">Play</button>
+          <button class="btn small" id="skStep" type="button">Step</button>
+          <button class="btn small" id="skReset" type="button">Reset</button>
         </div>
       </div>
       <div class="panel disc-rules">
-        <h3>怎么判定、怎么计分</h3>
+        <h3>How it is judged and scored</h3>
         <table class="mini">
-          <thead><tr><th>情形</th><th>归类</th><th>计分</th></tr></thead>
+          <thead><tr><th>Situation</th><th>Classification</th><th>Credit</th></tr></thead>
           <tbody>
-            <tr><td>截止日前 ML 文献中未见此用法</td><td>局部发现</td><td>全额</td></tr>
-            <tr><td>ML 用过，但用于不同问题</td><td>迁移发现</td><td>× 0.5</td></tr>
-            <tr><td>ML 已用于同一问题</td><td>检索复用</td><td>只计 Q</td></tr>
-            <tr><td>消融无显著差异</td><td>装饰性引入</td><td>0</td></tr>
-            <tr><td>来源不含被迁移的思想</td><td>错误溯源</td><td>0，并扣 Q</td></tr>
+            <tr><td>This use not found in the ML literature before the cutoff</td><td>local discovery</td><td>full</td></tr>
+            <tr><td>Used in ML, but for a different problem</td><td>transfer discovery</td><td>× 0.5</td></tr>
+            <tr><td>Already used in ML for the same problem</td><td>retrieval reuse</td><td>counts only toward Q</td></tr>
+            <tr><td>No significant difference in ablation</td><td>decorative import</td><td>0</td></tr>
+            <tr><td>The source does not contain the transferred idea</td><td>incorrect provenance</td><td>0, and Q is penalized</td></tr>
           </tbody>
         </table>
-        <p class="formula-line mono">x = 有效性 · 应用新颖度 · 溯源正确性 · (0.5 + 0.5 · 溯源距离)</p>
-        <p class="formula-line mono">X = 1 − Π(1 − x)　　综合分 × (1 + 0.25 · X)</p>
-        <p class="panel-note">有效性来自基准方的消融：把模块换成平凡替代后重训，收益下降必须超过种子噪声。跨领域来源的刊物等级与引用在其所属领域内评定。</p>
+        <p class="formula-line mono">x = effectiveness · application novelty · provenance correctness · (0.5 + 0.5 · provenance distance)</p>
+        <p class="formula-line mono">X = 1 − Π(1 − x)    overall × (1 + 0.25 · X)</p>
+        <p class="panel-note">Effectiveness comes from the benchmark operator's ablation: replace the module with a trivial substitute and retrain; the drop in gain must exceed seed noise. Venue tier and citations of cross-field sources are assessed within their own fields.</p>
       </div>
     </div>
   </section>
 
-  <!-- ============ 验证模式与资源档 ============ -->
+  <!-- ============ Verification modes and resource tiers ============ -->
   <section class="block" id="modes" aria-labelledby="modesTitle">
     <div class="block-head">
-      <h2 id="modesTitle">三种验证模式，三档资源，三档难度</h2>
-      <p>agent 要反复试错，所以 Budget 版不按原文做全量或大尺寸训练；工业级刚需另设 Pro Set，给足算力，改用审计验证。</p>
+      <h2 id="modesTitle">Three verification modes, three resource tiers, three difficulty levels</h2>
+      <p>Agents need repeated trial and error, so the Budget edition never trains at the paper's full or large scale; the compute-heavy industrial tasks form a separate Pro Set with ample compute, verified by audit instead.</p>
     </div>
     <div class="mode-grid">
       <article class="panel mode">
-        <h3>Budget：微尺度阶梯</h3>
-        <p>单张 24GB 参考卡。基准方用 agent 的方案在 μ1–μ3 上重训，隐藏设置不对 agent 开放。</p>
-        <svg id="ladderSvg" viewBox="0 0 360 220" role="img" aria-label="微尺度阶梯 μ1 μ2 μ3 与不计分的外层复核"></svg>
+        <h3>Budget: micro-scale ladder</h3>
+        <p>One 24GB reference card. The benchmark operator retrains the agent's method at μ1–μ3, and hidden settings are not available to the agent.</p>
+        <svg id="ladderSvg" viewBox="0 0 360 220" role="img" aria-label="Micro-scale ladder μ1 μ2 μ3 and the unscored outer review"></svg>
       </article>
       <article class="panel mode">
-        <h3>Pro：审计而不重训</h3>
-        <p>4 × H100、24 小时。检查点每 30 分钟登记一次哈希，基准方随机抽一个登记点续跑 1 小时核对。</p>
-        <svg id="proSvg" viewBox="0 0 360 222" role="img" aria-label="Pro Set 的 24 小时时间线、哈希链与抽样续跑"></svg>
+        <h3>Pro: audit instead of retraining</h3>
+        <p>4 × H100, 24 hours. Checkpoint hashes are registered every 30 minutes, and the benchmark operator resumes from one randomly chosen registered point for 1 hour to check.</p>
+        <svg id="proSvg" viewBox="0 0 360 222" role="img" aria-label="24-hour timeline, hash chain and sampled resume of the Pro Set"></svg>
       </article>
       <article class="panel mode">
-        <h3>判断：检验公开结论</h3>
-        <p>T7 类任务给出一条公开结论，agent 判断它在强基线、同算力下是否成立，并设计最小验证实验。</p>
+        <h3>Judgment: testing published claims</h3>
+        <p>T7 tasks give a published claim, and the agent submits a judgment report: whether the claim holds against strong baselines at equal compute, the reasons, and a minimal verification plan.</p>
         <div class="judge" id="judgeDemo"></div>
       </article>
     </div>
 
     <div class="tier-grid">
       <article class="panel">
-        <h3>资源档</h3>
+        <h3>Resource tiers</h3>
         <table class="mini" id="tierTable"></table>
       </article>
       <article class="panel">
-        <h3>难度 × 资源：case 分布</h3>
+        <h3>Difficulty × resources: case distribution</h3>
         <div id="matrix" class="matrix"></div>
-        <p class="panel-note">点格子，在下方 case 浏览中筛出对应的 case。</p>
+        <p class="panel-note">Click a cell to filter the matching cases in the case browser below.</p>
       </article>
     </div>
   </section>
 
-  <!-- ============ Case 浏览 ============ -->
+  <!-- ============ Case browser ============ -->
   <section class="block" id="cases" aria-labelledby="casesTitle">
     <div class="block-head">
-      <h2 id="casesTitle">Case 浏览</h2>
+      <h2 id="casesTitle">Case browser</h2>
       <p id="casesLede"></p>
     </div>
     <div class="filters" id="filters">
-      <div class="fgroup" id="fGroup"><span class="flabel">分组</span></div>
-      <div class="fgroup" id="fDiff"><span class="flabel">难度</span></div>
-      <div class="fgroup" id="fRes"><span class="flabel">资源</span></div>
-      <input type="search" id="caseSearch" placeholder="搜索锚点、arXiv 号、任务" aria-label="搜索 case">
+      <div class="fgroup" id="fGroup"><span class="flabel">Group</span></div>
+      <div class="fgroup" id="fDiff"><span class="flabel">Difficulty</span></div>
+      <div class="fgroup" id="fRes"><span class="flabel">Resources</span></div>
+      <div class="fgroup" id="fStatus"><span class="flabel">Status</span></div>
+      <div class="fgroup" id="fKind"><span class="flabel">Submission</span></div>
+      <input type="search" id="caseSearch" placeholder="Search anchor, arXiv ID, task" aria-label="Search cases">
       <span class="count" id="caseCount"></span>
     </div>
     <div class="case-list" id="caseList"></div>
   </section>
 
-  <!-- ============ 规模与成本 ============ -->
+  <!-- ============ Scale and cost ============ -->
   <section class="block" id="scale" aria-labelledby="scaleTitle">
     <div class="block-head">
-      <h2 id="scaleTitle">规模与成本</h2>
-      <p>Budget 版按参考卡 GPU-h 计，Pro Set 按 H100-h 计，两者分开汇总。</p>
+      <h2 id="scaleTitle">Scale and cost</h2>
+      <p>The Budget edition is counted in reference-card GPU-h and the Pro Set in H100-h; the two are summed separately.</p>
     </div>
     <div class="scale-grid" id="scaleGrid"></div>
   </section>
@@ -214,17 +307,17 @@
 
 <aside class="drawer" id="drawer" aria-hidden="true" aria-labelledby="drawerTitle">
   <div class="drawer-inner">
-    <button class="drawer-close" id="drawerClose" type="button" aria-label="关闭详情">关闭</button>
+    <button class="drawer-close" id="drawerClose" type="button" aria-label="Close details">Close</button>
     <div id="drawerBody"></div>
   </div>
 </aside>
 <div class="scrim" id="scrim" hidden></div>
 
 <footer class="foot">
-  <p>数据来自 <span class="mono">index.yaml</span> 与 <span class="mono">cases/B-OPT-001</span> 的评分输出。修改后运行 <span class="mono">python3 tools/build_site_data.py</span> 重新生成。</p>
+  <p>Data comes from <span class="mono">index.yaml</span>, the standard-case specs in <span class="mono">spec/standard_cases/</span>, each case's <span class="mono">oj.yaml</span>, <span class="mono">harness/metrics.py</span> and <span class="mono">agent/task.md</span>, and the historical demo output of <span class="mono">cases/B-OPT-001</span>. After changes, run <span class="mono">python3 tools/build_site_data.py</span> to regenerate.</p>
 </footer>
 
-<script src="data/abench-data.js"></script>
-<script src="assets/app.js"></script>
+<script src="data/abench-data.js?v=std21"></script>
+<script src="assets/app.js?v=std21"></script>
 </body>
 </html>
