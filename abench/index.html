@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;900&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="assets/style.css?v=std21">
+<link rel="stylesheet" href="assets/style.css?v=std21b">
 <script>
   try { const t = localStorage.getItem("abench-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
 </script>
@@ -17,14 +17,14 @@
   <div class="topbar-inner">
     <a class="wordmark" href="#top" aria-label="ABench home"><img src="assets/logo.png" alt="" aria-hidden="true"> <span>ABench</span><span class="ver">v2.1 · OJ</span></a>
     <nav class="nav" aria-label="Page navigation">
-      <a href="#flow">Build flow</a>
-      <a href="#oj">OJ evaluation</a>
+      <a href="#flow">Flow</a>
+      <a href="#oj">OJ</a>
       <a href="#standard">Standard cases</a>
-      <a href="#report">Design report</a>
-      <a href="#scoring">Evaluation modes</a>
-      <a href="#discovery">Local discovery</a>
-      <a href="#modes">Verification and resources</a>
-      <a href="#cases">Case</a>
+      <a href="#report">Report</a>
+      <a href="#scoring">Scoring</a>
+      <a href="#discovery">Discovery</a>
+      <a href="#modes">Verification</a>
+      <a href="#cases">Cases</a>
       <a href="#scale">Scale</a>
     </nav>
     <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle light/dark">
@@ -317,7 +317,7 @@
   <p>Data comes from <span class="mono">index.yaml</span>, the standard-case specs in <span class="mono">spec/standard_cases/</span>, each case's <span class="mono">oj.yaml</span>, <span class="mono">harness/metrics.py</span> and <span class="mono">agent/task.md</span>, and the historical demo output of <span class="mono">cases/B-OPT-001</span>. After changes, run <span class="mono">python3 tools/build_site_data.py</span> to regenerate.</p>
 </footer>
 
-<script src="data/abench-data.js?v=std21"></script>
-<script src="assets/app.js?v=std21"></script>
+<script src="data/abench-data.js?v=std21b"></script>
+<script src="assets/app.js?v=std21b"></script>
 </body>
 </html>

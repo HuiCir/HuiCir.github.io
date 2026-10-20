@@ -161,7 +161,13 @@
       boxes.push({ x1: p._x - p._r - 2, x2: p._x + p._r + 6 + textW(p._label), y1: pick - 12, y2: pick + 12 });
     });
     const EXT_Y = 494;
-    ext.forEach((p, i) => { p._x = 210 + i * 210; p._y = EXT_Y; p._r = 5 + 12 * (p.w ?? 0.4); p._label = `${PAPER_SHORT[p.id] || p.id} (${p.venue.replace(/\s*\d{4}$/, "")}, ${p.year})`; });
+    let extX = 210;   // place cross-field sources one after another so that circles and labels never overlap
+    ext.forEach(p => {
+      p._r = 5 + 12 * (p.w ?? 0.4); p._y = EXT_Y;
+      p._label = `${PAPER_SHORT[p.id] || p.id} (${p.venue.replace(/\s*\d{4}$/, "")}, ${p.year})`;
+      p._x = extX + p._r;
+      extX = p._x + p._r + 5 + textW(p._label) + 36;
+    });
 
     const ex = C.submissions.example_submission;
     const srcRows = ex.Q.sources;
@@ -202,7 +208,7 @@
         S("circle", { cx: p._x, cy: p._y, r: p._r, css: style, "stroke-width": 1.5, "stroke-dasharray": p.role === "T7" ? "3 2" : null }, g);
         if (p.role === "anchor") {
           S("text", { x: p._x - p._r - 8, y: p._y + 1, "text-anchor": "end", "font-size": 17, "font-weight": 700, class: "t-ink", text: "Adam" }, g);
-          S("text", { x: p._x - p._r - 8, y: p._y + 19, "text-anchor": "end", "font-size": 12, text: "anchor · 2014" }, g);
+          S("text", { x: p._x, y: p._y + p._r + 16, "text-anchor": "middle", "font-size": 12, text: "anchor · 2014" }, g);
         } else {
           S("text", { x: p._x + p._r + 5, y: p._y + 4.5, "font-size": FS, text: p._label }, g);
         }
@@ -229,7 +235,7 @@
         const sx = prop.x - 60, sy = prop.y + Math.max(-20, Math.min(20, (ty - prop.y) * 0.15));
         let d;
         if (ty > 460) {
-          d = `M${prop.x - 20},${prop.y + 26} C${prop.x - 20},${ty} ${tx + 260},${ty} ${tx + p._r},${ty}`;
+          d = `M${prop.x - 20},${prop.y + 26} C${prop.x - 20},${ty + 30} ${tx},${ty + 30} ${tx},${ty + p._r}`;   // enter from below, clear of the label
         } else {
           const mx = (sx + tx) / 2;
           const my = Math.abs(ty - 250) < 5 ? 48 : ty < 250 ? Math.min(sy, ty) - 46 : Math.max(sy, ty) + 46;
@@ -520,8 +526,11 @@
       const c = S("circle", { cx: X(i), cy: Y, r: 15, css: "fill:var(--sheet);stroke:var(--ink-3)", "stroke-width": 2 }, g);
       S("text", { x: X(i), y: Y + 4.5, "text-anchor": "middle", "font-size": 12, class: "t-mono t-ink", text: i + 1 }, g);
       S("text", { x: X(i), y: Y - 30, "text-anchor": "middle", "font-size": 13.5, class: "t-ink", text: a }, g);
-      S("text", { x: X(i), y: Y + 40, "text-anchor": "middle", "font-size": 11.5, text: b }, g);
-      const note = S("text", { x: X(i), y: Y + 62, "text-anchor": "middle", "font-size": 12, text: "" }, g);
+      // two short lines per step so that neighbouring captions (140 px apart) never run into each other
+      const words = b.split(" "), lines = [""];
+      words.forEach(w => { const cur = lines[lines.length - 1]; if (cur && (cur + " " + w).length > 17) lines.push(w); else lines[lines.length - 1] = cur ? cur + " " + w : w; });
+      lines.slice(0, 3).forEach((ln, k) => S("text", { x: X(i), y: Y + 36 + k * 14, "text-anchor": "middle", "font-size": 11.5, text: ln }, g));
+      const note = S("text", { x: X(i), y: Y + 86, "text-anchor": "middle", "font-size": 12, text: "" }, g);
       return { c, note };
     });
     const dot = S("circle", { cx: X(0), cy: Y, r: 7, css: "fill:var(--blue)" }, svg);
@@ -569,7 +578,7 @@
     const DOCS = [["reports/B-OPT-001-rankgate.html", "RankGate example", "cases/B-OPT-001/example_submission/report/index.html"], ["reports/design_template.html", "Design report template", "templates/report_template.html"], ["reports/judgment_template.html", "Judgment report template", "templates/report_template.html (T7)"]]
       .filter(d => (A.reports || []).includes(d[0]));
     const sw = $("#repSwitch"), fr = $("#repFrame");
-    const ANCH = ["abstract1", "S1", "S2", "S3", "S4", "bib"];
+    const ANCH = ["abstract1", "S1", "S2", "S3", "S4", "changes", "bib"];
     const CLS = ["ltx_document", "ltx_title_document", "ltx_abstract", "ltx_section", "ltx_equation", "ltx_float_algorithm", "ltx_theorem", "ltx_bibliography"];
     $("#repAnchors").innerHTML = ANCH.map(a => `<span class="tag plain mono" data-a="${a}">#${a}</span>`).join("");
     $("#repClasses").innerHTML = CLS.map(a => `<span class="tag plain mono" data-c="${a}">.${a}</span>`).join("");
@@ -784,7 +793,7 @@
     function build() {
       svg.innerHTML = "";
       S("text", { x: ox + n * cs + 30, y: oy - 12, "text-anchor": "middle", "font-size": 11.5, text: "row sum" }, svg);
-      S("text", { x: ox - 10, y: oy + n * cs + 30, "text-anchor": "end", "font-size": 11.5, text: "col sum" }, svg);
+      S("text", { x: ox + n * cs + 30, y: oy + n * cs + 30, "text-anchor": "middle", "font-size": 11.5, text: "← col sum" }, svg);
       sweep = S("rect", { x: ox, y: oy, width: 0, height: 0, rx: 4, css: "fill:none;stroke:var(--red)", "stroke-width": 2, opacity: 0 }, svg);
       cells = [];
       for (let i = 0; i < n; i++) {
